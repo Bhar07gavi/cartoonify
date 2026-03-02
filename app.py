@@ -1,467 +1,576 @@
-import streamlit as st
-import cv2
-import numpy as np
-from cartoon import cartoon, sketch, pencil
-from PIL import Image
-import tempfile
 import os
+import io
+import cv2
+import time
+import shutil
+import tempfile
+import subprocess
+import numpy as np
+import streamlit as st
+import ui.components as _comp
+from PIL import Image
+from urllib.request import urlopen, Request
+from urllib.error import URLError
+from ui.styles import inject_styles
+from ui.components import navbar, left_panel_controls
+from cartoon import cartoon, sketch, pencil
+from auth import create_user_table, signup_user, login_user
 
-# =========================
+# Optional: image comparison
+try:
+    from streamlit_image_comparison import image_comparison
+    CMP_OK = True
+except Exception:
+    CMP_OK = False
+
+# Optional ONNX runtime (for AnimeGAN)
+try:
+    import onnxruntime as ort
+    ONNX_OK = True
+except Exception:
+    ONNX_OK = False
+
+# AnimeGAN import
+try:
+    from animegan import AnimeGAN, ANIME_MODEL_PATH
+    ANIME_OK = True
+except Exception:
+    ANIME_OK = False
+
+
+# -----------------------------
 # Page Config
-# =========================
-st.set_page_config(page_title="AI Toonify • Creator Studio", page_icon="✨", layout="wide")
-
-# =========================
-# Attractive “Creator Studio” UI CSS
-# =========================
-st.markdown(
-    """
-<style>
-/* ---------- Base ---------- */
-.stApp{
-  background: linear-gradient(180deg, #0b1020 0%, #0a0f1e 40%, #070a14 100%);
-  color:#EAF0FF;
-}
-.block-container{ padding-top: 1.0rem; }
-
-/* ---------- Top Gradient Bar ---------- */
-.topbar{
-  border-radius: 22px;
-  padding: 18px 20px;
-  background:
-    radial-gradient(1100px 420px at 10% 20%, rgba(255,0,150,0.25) 0%, transparent 55%),
-    radial-gradient(1000px 420px at 90% 10%, rgba(0,229,255,0.22) 0%, transparent 55%),
-    linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
-  border: 1px solid rgba(255,255,255,0.14);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
-  backdrop-filter: blur(10px);
-}
-.brand{
-  display:flex; align-items:center; gap:12px;
-}
-.logo{
-  width:44px; height:44px; border-radius:14px;
-  background: linear-gradient(135deg, #ff4fd8, #00e5ff);
-  box-shadow: 0 12px 30px rgba(0,229,255,0.18);
-  display:flex; align-items:center; justify-content:center;
-  font-weight:900; color:#071018;
-}
-.title{
-  font-size: 34px; font-weight: 900; margin:0;
-  letter-spacing: .2px;
-}
-.subtitle{ margin:2px 0 0 0; color: rgba(234,240,255,0.75); }
-
-/* ---------- Sidebar ---------- */
-section[data-testid="stSidebar"]{
-  background: rgba(255,255,255,0.04);
-  border-right: 1px solid rgba(255,255,255,0.10);
-}
-.sidebar-card{
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 16px;
-  padding: 14px;
-  margin-bottom: 12px;
-}
-
-/* ---------- Main Cards ---------- */
-.card{
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  padding: 18px;
-  box-shadow: 0 18px 55px rgba(0,0,0,0.40);
-  backdrop-filter: blur(10px);
-}
-.hr{ height:1px; background: rgba(255,255,255,0.12); margin: 14px 0; }
-.muted{ color: rgba(234,240,255,0.72); font-size: 0.92rem; }
-
-/* ---------- Buttons ---------- */
-.stButton > button{
-  width: 100%;
-  border-radius: 14px;
-  border: 0;
-  padding: 0.82rem 1rem;
-  font-weight: 900;
-  color: #071018;
-  background: linear-gradient(90deg, #ff4fd8, #00e5ff);
-  box-shadow: 0 14px 28px rgba(0,229,255,0.12);
-}
-.stButton > button:hover{
-  transform: translateY(-1px);
-  filter: brightness(1.04);
-}
-
-/* ---------- Download Buttons ---------- */
-.stDownloadButton > button{
-  width: 100%;
-  border-radius: 14px;
-  border: 0;
-  padding: 0.82rem 1rem;
-  font-weight: 900;
-  color: #071018;
-  background: linear-gradient(90deg, #ffe259, #ffa751);
-  box-shadow: 0 14px 28px rgba(255,226,89,0.14);
-}
-
-/* ---------- Inputs ---------- */
-input, textarea{ border-radius: 12px !important; }
-
-/* ---------- Tabs look a bit cleaner ---------- */
-.stTabs [data-baseweb="tab-list"]{
-  gap: 8px;
-}
-.stTabs [data-baseweb="tab"]{
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 12px;
-  padding: 10px 14px;
-}
-.stTabs [aria-selected="true"]{
-  background: rgba(255,255,255,0.10) !important;
-  border: 1px solid rgba(255,255,255,0.18) !important;
-}
-
-/* ---------- Rounded images ---------- */
-img{ border-radius: 16px; }
-</style>
-""",
-    unsafe_allow_html=True,
+# -----------------------------
+st.set_page_config(
+    page_title="AI Toonify • Studio",
+    page_icon="✨",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# =========================
+inject_styles()
+
+
+# -----------------------------
+# Session State
+# -----------------------------
+def init_state():
+    st.session_state.setdefault("history", [])
+    st.session_state.setdefault("last_out_image_bgr", None)
+    st.session_state.setdefault("last_out_video_path", None)
+
+    st.session_state.setdefault("logged_in", False)
+    st.session_state.setdefault("username", "")
+
+    st.session_state.setdefault("paid", False)
+    st.session_state.setdefault("_url_video_path", None)
+
+
+init_state()
+create_user_table()
+
+
+# -----------------------------
+# Models & Paths
+# -----------------------------
+ANIME_MODEL_FILE = os.path.join("models", "animeganv2.onnx")
+
+
+@st.cache_resource
+def load_anime_model():
+    if not (ONNX_OK and ANIME_OK):
+        raise RuntimeError("AnimeGAN not available. Install onnxruntime and keep animegan.py.")
+    model_path = ANIME_MODEL_FILE if os.path.exists(ANIME_MODEL_FILE) else ANIME_MODEL_PATH
+    if not os.path.exists(model_path):
+        raise RuntimeError(f"AnimeGAN model not found: {model_path}")
+    return AnimeGAN(model_path=model_path)
+
+
+# -----------------------------
 # Helpers
-# =========================
-def process_image(image_np, style: str):
-    if style == "Cartoon":
-        out_bgr = cartoon(image_np)
-    elif style == "Sketch":
-        out_bgr = sketch(image_np)
-    else:
-        out_bgr = pencil(image_np)
-    return out_bgr
+# -----------------------------
+def bgr_to_rgb(bgr):
+    return cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
 
 
-def image_to_video(image_rgb, style: str, seconds: int = 5, fps: int = 24, add_zoom: bool = True):
-    out_bgr = process_image(image_rgb, style)
-    h, w = out_bgr.shape[:2]
-    total_frames = int(seconds * fps)
+def rgb_to_bgr(rgb):
+    return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
-    tmp_out = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-    out_path = tmp_out.name
-    tmp_out.close()
 
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    vw = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
+def read_image_bytes(file_bytes) -> np.ndarray:
+    pil = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+    return np.array(pil)
 
-    for i in range(total_frames):
-        frame = out_bgr.copy()
-        if add_zoom:
-            t = i / max(total_frames - 1, 1)
-            scale = 1.0 + 0.08 * t
-            nw, nh = int(w * scale), int(h * scale)
-            zoom = cv2.resize(frame, (nw, nh), interpolation=cv2.INTER_LINEAR)
-            x1 = (nw - w) // 2
-            y1 = (nh - h) // 2
-            frame = zoom[y1:y1 + h, x1:x1 + w]
-        vw.write(frame)
 
-    vw.release()
+def resize_max_side(img_rgb, max_side=1024):
+    h, w = img_rgb.shape[:2]
+    m = max(h, w)
+    if m <= max_side:
+        return img_rgb
+    scale = max_side / float(m)
+    nh, nw = int(h * scale), int(w * scale)
+    return cv2.resize(img_rgb, (nw, nh), interpolation=cv2.INTER_AREA)
+
+
+def push_history(item):
+    hist = st.session_state.get("history", [])
+    hist.insert(0, item)
+    st.session_state["history"] = hist[:20]
+
+
+def download_button_bytes(label, data: bytes, filename: str, mime: str):
+    st.download_button(label, data=data, file_name=filename, mime=mime, use_container_width=True)
+
+
+def file_bytes_from_path(path):
+    with open(path, "rb") as f:
+        return f.read()
+
+
+def safe_temp_path(suffix):
+    fd, p = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+    return p
+
+
+def ffmpeg_exists():
+    try:
+        subprocess.run(["ffmpeg", "-version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except Exception:
+        return False
+
+
+def ensure_mp4(input_path, out_path):
+    if input_path.lower().endswith(".mp4"):
+        shutil.copy(input_path, out_path)
+        return out_path
+    if not ffmpeg_exists():
+        raise RuntimeError("ffmpeg not found. Please install ffmpeg to convert videos.")
+    cmd = [
+        "ffmpeg", "-y", "-i", input_path,
+        "-c:v", "libx264", "-preset", "fast", "-crf", "22",
+        "-c:a", "aac", out_path
+    ]
+    subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return out_path
 
 
-def video_to_toonify(input_path: str, style: str, max_size: int = 720):
-    cap = cv2.VideoCapture(input_path)
+def fetch_video_from_url(url: str) -> str:
+    req = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    data = urlopen(req, timeout=40).read()
+    temp_in = safe_temp_path(".mp4")
+    with open(temp_in, "wb") as f:
+        f.write(data)
+    return temp_in
+
+
+# -----------------------------
+# Filters
+# -----------------------------
+def _clamp01(x):
+    return max(0.0, min(1.0, x))
+
+
+def apply_post_filter(bgr, name="None", intensity=45, edge_strength=35):
+    if name == "None":
+        return bgr
+
+    I = _clamp01(intensity / 100.0)
+    E = _clamp01(edge_strength / 100.0)
+    out = bgr.copy()
+
+    if name == "Vivid":
+        out = cv2.convertScaleAbs(out, alpha=1.0 + 0.45 * I, beta=int(8 * I))
+        hsv = cv2.cvtColor(out, cv2.COLOR_BGR2HSV).astype(np.float32)
+        hsv[..., 1] *= (1.0 + 0.55 * I)
+        hsv[..., 1] = np.clip(hsv[..., 1], 0, 255)
+        out = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
+        return out
+
+    if name == "Warm":
+        b, g, r = cv2.split(out)
+        r = cv2.add(r, np.uint8(30 * I))
+        b = cv2.subtract(b, np.uint8(15 * I))
+        return cv2.merge([b, g, r])
+
+    if name == "Cool":
+        b, g, r = cv2.split(out)
+        b = cv2.add(b, np.uint8(28 * I))
+        r = cv2.subtract(r, np.uint8(12 * I))
+        return cv2.merge([b, g, r])
+
+    if name == "Sepia":
+        kernel = np.array([
+            [0.272, 0.534, 0.131],
+            [0.349, 0.686, 0.168],
+            [0.393, 0.769, 0.189]
+        ], dtype=np.float32)
+        sep = cv2.transform(out, kernel)
+        sep = np.clip(sep, 0, 255).astype(np.uint8)
+        return cv2.addWeighted(out, 1.0 - I, sep, I, 0)
+
+    if name == "Sharpen":
+        blur = cv2.GaussianBlur(out, (0, 0), sigmaX=1.2)
+        sharp = cv2.addWeighted(out, 1.0 + 1.2 * I, blur, -1.2 * I, 0)
+        return sharp
+
+    if name == "Posterize":
+        levels = int(10 - 7 * I)  # 10 -> 3
+        levels = max(3, levels)
+        step = 256 // levels
+        return (out // step) * step
+
+    if name == "Pixelate":
+        h, w = out.shape[:2]
+        scale = int(16 - 12 * I)  # 16 -> 4
+        scale = max(4, scale)
+        small = cv2.resize(out, (w // scale, h // scale), interpolation=cv2.INTER_AREA)
+        return cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
+
+    if name == "Vignette":
+        h, w = out.shape[:2]
+        kx = cv2.getGaussianKernel(w, w * (0.28 + 0.10 * (1 - I)))
+        ky = cv2.getGaussianKernel(h, h * (0.28 + 0.10 * (1 - I)))
+        mask = (ky @ kx.T)
+        mask = mask / mask.max()
+        strength = 0.55 * I
+        vign = out.astype(np.float32)
+        vign[..., 0] *= (1 - strength) + strength * mask
+        vign[..., 1] *= (1 - strength) + strength * mask
+        vign[..., 2] *= (1 - strength) + strength * mask
+        return np.clip(vign, 0, 255).astype(np.uint8)
+
+    if name == "Comic Ink":
+        gray = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
+        gray_blur = cv2.GaussianBlur(gray, (0, 0), 1.2)
+        edges = cv2.Canny(gray_blur, int(60 + 120 * E), int(120 + 180 * E))
+        edges = cv2.dilate(edges, np.ones((2, 2), np.uint8), iterations=1)
+        edges_inv = cv2.bitwise_not(edges)
+        base = apply_post_filter(out, "Posterize", intensity=70, edge_strength=edge_strength)
+        return cv2.bitwise_and(base, base, mask=edges_inv)
+
+    if name == "Neon Glow":
+        gray = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, int(50 + 140 * E), int(120 + 200 * E))
+        edges = cv2.GaussianBlur(edges, (0, 0), 2.0 + 2.5 * I)
+        glow = cv2.applyColorMap(edges, cv2.COLORMAP_TURBO)
+        glow = cv2.convertScaleAbs(glow, alpha=1.1, beta=0)
+        return cv2.addWeighted(out, 1.0, glow, 0.65 * I, 0)
+
+    return out
+
+
+# -----------------------------
+# Processing
+# -----------------------------
+def process_image(img_rgb, style, smooth=35, brighten=8):
+    img_bgr = rgb_to_bgr(img_rgb)
+
+    if smooth > 0:
+        s = max(1, smooth // 5)
+        img_bgr = cv2.bilateralFilter(img_bgr, d=0, sigmaColor=30 + s * 2, sigmaSpace=30 + s * 2)
+
+    if brighten != 0:
+        img_bgr = cv2.convertScaleAbs(img_bgr, alpha=1.05, beta=int(brighten))
+
+    img_rgb2 = bgr_to_rgb(img_bgr)
+
+    if style == "Cartoon":
+        out_bgr = cartoon(img_rgb2)
+    elif style == "Sketch":
+        out_bgr = sketch(img_rgb2)
+    elif style == "Pencil":
+        out_bgr = pencil(img_rgb2)
+    elif style == "AnimeGAN":
+        model = load_anime_model()
+        out_rgb = model.infer(img_rgb2)
+        out_bgr = rgb_to_bgr(out_rgb)
+    else:
+        out_bgr = img_bgr
+
+    return out_bgr
+
+
+def process_video(in_path, style, smooth=35, brighten=8, post_filter="None", intensity=45, edge_strength=35):
+    cap = cv2.VideoCapture(in_path)
     if not cap.isOpened():
-        raise RuntimeError("Could not open the video file.")
+        raise RuntimeError("Could not open video.")
 
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    if not fps or fps <= 0:
-        fps = 25
+    fps = cap.get(cv2.CAP_PROP_FPS) or 24
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 640)
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 360)
 
-    frames_out = []
+    out_path = safe_temp_path(".mp4")
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
+
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    prog = st.progress(0, text="Processing video...")
+
+    i = 0
     while True:
-        ok, frame_bgr = cap.read()
+        ok, frame = cap.read()
         if not ok:
             break
 
-        frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        frame_rgb = bgr_to_rgb(frame)
+        out_bgr = process_image(frame_rgb, style, smooth=smooth, brighten=brighten)
+        out_bgr = apply_post_filter(out_bgr, post_filter, intensity, edge_strength)
+        out_bgr = cv2.resize(out_bgr, (w, h), interpolation=cv2.INTER_AREA)
+        writer.write(out_bgr)
 
-        h, w = frame_rgb.shape[:2]
-        scale = min(max_size / max(h, w), 1.0)
-        nh, nw = int(h * scale), int(w * scale)
-        frame_rgb = cv2.resize(frame_rgb, (nw, nh), interpolation=cv2.INTER_AREA)
-
-        nh = max((nh // 8) * 8, 8)
-        nw = max((nw // 8) * 8, 8)
-        frame_rgb = cv2.resize(frame_rgb, (nw, nh), interpolation=cv2.INTER_AREA)
-
-        out_bgr = process_image(frame_rgb, style)
-        frames_out.append(out_bgr)
+        i += 1
+        if total > 0 and i % 3 == 0:
+            prog.progress(min(i / total, 1.0), text=f"Processing video... {i}/{total}")
 
     cap.release()
-
-    if len(frames_out) == 0:
-        raise RuntimeError("No frames extracted from video.")
-
-    out_h, out_w = frames_out[0].shape[:2]
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    output_path = input_path.replace(".mp4", f"_{style.lower()}.mp4")
-
-    vw = cv2.VideoWriter(output_path, fourcc, fps, (out_w, out_h))
-    for fr in frames_out:
-        vw.write(fr)
-    vw.release()
-    return output_path
+    writer.release()
+    prog.empty()
+    return out_path
 
 
-# =========================
-# Session State
-# =========================
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "paid" not in st.session_state:
-    st.session_state.paid = False
-
-
-# =========================
-# LOGIN (clean centered)
-# =========================
-if not st.session_state.logged_in:
-    st.markdown(
-        """
-<div class="topbar">
-  <div class="brand">
-    <div class="logo">AI</div>
-    <div>
-      <div class="title">AI Toonify</div>
-      <div class="subtitle">Creator Studio • Login to continue</div>
-    </div>
-  </div>
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-    st.write("")
-    c1, c2, c3 = st.columns([1.2, 1.0, 1.2])
+# -----------------------------
+# Auth Page
+# -----------------------------
+def auth_page():
+    c1, c2, c3 = st.columns([1.4, 1.2, 1.4])
     with c2:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.markdown("### 🔐 Login")
-        st.markdown('<div class="muted">Demo: <b>admin / admin123</b></div>', unsafe_allow_html=True)
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 
-        u = st.text_input("Username", placeholder="admin")
-        p = st.text_input("Password", type="password", placeholder="admin123")
-
-        if st.button("Login"):
-            if u == "admin" and p == "admin123":
-                st.session_state.logged_in = True
-                st.rerun()
-            else:
-                st.error("Invalid username or password")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-    st.stop()
-
-
-# =========================
-# TOP BAR
-# =========================
-left, right = st.columns([5, 1.2])
-with left:
-    st.markdown(
-        """
-<div class="topbar">
-  <div class="brand">
-    <div class="logo">AI</div>
-    <div>
-      <div class="title">AI Toonify</div>
-      <div class="subtitle">Cartoon • Sketch • Pencil • Image→Video • Video</div>
-    </div>
-  </div>
+        st.markdown("""
+<div class="brand">
+  <div class="brand-badge">AI</div>
 </div>
-""",
-        unsafe_allow_html=True,
-    )
-with right:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("#### Session")
-    if st.button("🚪 Logout"):
-        st.session_state.logged_in = False
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+<div class="brand-title">AI Toonify</div>
+<div class="brand-sub">Creator Studio • Transform media into art</div>
 
-st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
+<div class="float-sprite s1">🧚‍♀️</div>
+<div class="float-sprite s2">⭐</div>
+<div class="float-sprite s3">✨</div>
+<div class="float-sprite s4">🎨</div>
+""", unsafe_allow_html=True)
+
+        st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
+        tab1, tab2 = st.tabs(["Sign In", "Create Account"])
+
+        with tab1:
+            u = st.text_input("Username", key="login_user")
+            p = st.text_input("Password", type="password", key="login_pass")
+
+            if st.button("✨ Sign In"):
+                ok = login_user(u, p)
+                if ok:
+                    st.session_state["logged_in"] = True
+                    st.session_state["username"] = u
+                    st.toast("Signed in ✅")
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password.")
+
+            st.markdown('<div class="helper">Demo: enter any username/password (2+ chars)</div>', unsafe_allow_html=True)
+
+        with tab2:
+            su = st.text_input("New Username", key="signup_user")
+            sp = st.text_input("New Password", type="password", key="signup_pass")
+            if st.button("🚀 Create Account"):
+                ok = signup_user(su, sp)
+                if ok:
+                    st.success("Account created! Please sign in.")
+                else:
+                    st.error("Username already exists or invalid.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
-# =========================
-# SIDEBAR (clean)
-# =========================
-st.sidebar.markdown('<div class="sidebar-card">', unsafe_allow_html=True)
-st.sidebar.markdown("## ⚙ Controls")
-mode = st.sidebar.radio("Mode", ["Image", "Video"], horizontal=True)
-style = st.sidebar.selectbox("Style", ["Cartoon", "Sketch", "Pencil"])
-st.sidebar.markdown("</div>", unsafe_allow_html=True)
+# -----------------------------
+# Main App
+# -----------------------------
+def app_page():
+    navbar()
 
-st.sidebar.markdown('<div class="sidebar-card">', unsafe_allow_html=True)
-st.sidebar.markdown("### 📂 Upload")
-if mode == "Image":
-    uploaded_file = st.sidebar.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
-else:
-    uploaded_file = st.sidebar.file_uploader("Upload Video", type=["mp4", "mov", "avi", "mkv"])
-st.sidebar.markdown("</div>", unsafe_allow_html=True)
+    controls = left_panel_controls(ONNX_OK, ANIME_OK, ANIME_MODEL_FILE)
 
-st.sidebar.markdown('<div class="sidebar-card">', unsafe_allow_html=True)
-st.sidebar.markdown("### 💳 Dummy Payment")
-p1, p2 = st.sidebar.columns(2)
-with p1:
-    if not st.session_state.paid:
-        if st.button("Pay ₹10"):
-            st.session_state.paid = True
-            st.sidebar.success("Paid ✅")
+    # ✅ Safe unpack
+    if isinstance(controls, tuple) and len(controls) == 7:
+        mode, style, smooth, brighten, post_filter, intensity, edge_strength = controls
     else:
-        st.sidebar.success("Paid ✅")
-with p2:
-    if st.button("Reset"):
-        st.session_state.paid = False
-        st.rerun()
-st.sidebar.caption("Tip: Use short video (10–20s) for fast demo.")
-st.sidebar.markdown("</div>", unsafe_allow_html=True)
+        mode, style, smooth, brighten = controls
+        post_filter, intensity, edge_strength = "None", 45, 35
 
-
-# =========================
-# MAIN
-# =========================
-if not uploaded_file:
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.markdown("## 👈 Start here")
-    st.markdown(
-        "<div class='muted'>Upload from the sidebar, choose a style, then export image or MP4.</div>",
-        unsafe_allow_html=True,
-    )
-    st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
-    st.markdown("<span class='badge'>Pipeline</span> Preprocessing → Frames → Stylization → Post → Reconstruction",
-                unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-else:
+    st.markdown("## ✨ Studio")
+    colA, colB = st.columns([1.0, 1.0], gap="large")
+    
+    # =========================
+    # IMAGE MODE
+    # =========================
     if mode == "Image":
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        tabs = st.tabs(["✨ Preview", "🎬 Image→Video", "⬇ Export"])
+        with colA:
+            st.markdown("### 📷 Upload Image")
+            up = st.file_uploader("Upload image", type=["png", "jpg", "jpeg"], label_visibility="collapsed")
 
-        image = Image.open(uploaded_file).convert("RGB")
-        image_np = np.array(image)
+            img_rgb = None
+            if up:
+                img_rgb = read_image_bytes(up.read())
+                img_rgb = resize_max_side(img_rgb, 1024)
+                st.image(img_rgb, caption="Original", use_container_width=True)
 
-        out_bgr = process_image(image_np, style)
-        out_rgb = cv2.cvtColor(out_bgr, cv2.COLOR_BGR2RGB)
+        with colB:
+            st.markdown("### 🎨 Output")
 
-        with tabs[0]:
-            st.markdown("### Result Preview")
-            a, b = st.columns(2)
-            with a:
-                st.image(image, caption="Original", use_container_width=True)
-            with b:
-                st.image(out_rgb, caption=f"{style}", use_container_width=True)
+            if up:
+                with st.spinner("Generating..."):
+                    out_bgr = process_image(img_rgb, style, smooth=smooth, brighten=brighten)
+                    out_bgr = apply_post_filter(out_bgr, post_filter, intensity, edge_strength)
 
-        with tabs[1]:
-            st.markdown("### Create MP4 from Image")
-            st.markdown("<div class='muted'>We create frames from the stylized image and rebuild an MP4.</div>",
-                        unsafe_allow_html=True)
-            sec = st.slider("Duration (seconds)", 2, 12, 5)
-            fps_sel = st.selectbox("FPS", [12, 24, 30], index=1)
-            zoom = st.checkbox("Smooth zoom effect", value=True)
+                out_rgb = bgr_to_rgb(out_bgr)
+                st.image(out_rgb, caption=f"Result • {style}", use_container_width=True)
 
-            if st.button("Render MP4"):
-                if not st.session_state.paid:
-                    st.info("Please complete payment to download the video.")
-                else:
-                    with st.spinner("Rendering MP4..."):
-                        vid_path = image_to_video(image_np, style, seconds=sec, fps=fps_sel, add_zoom=zoom)
-                    st.success("MP4 created ✅")
-                    with open(vid_path, "rb") as f:
-                        st.download_button(
-                            "⬇ Download MP4",
-                            data=f,
-                            file_name=f"image_to_video_{style.lower()}.mp4",
-                            mime="video/mp4",
-                        )
-
-        with tabs[2]:
-            st.markdown("### Export Image")
-            if st.session_state.paid:
-                st.download_button(
-                    "⬇ Download PNG",
-                    data=cv2.imencode(".png", out_bgr)[1].tobytes(),
-                    file_name="toonify.png",
-                    mime="image/png",
-                )
-            else:
-                st.info("Please complete payment to download the image.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    else:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        tabs = st.tabs(["🎥 Preview", "⚡ Convert", "⬇ Export"])
-
-        with tabs[0]:
-            st.markdown("### Video Preview")
-            st.video(uploaded_file)
-            st.markdown("<span class='badge'>Pipeline</span> Preprocess → Frames → Stylize → Rebuild",
-                        unsafe_allow_html=True)
-
-        with tabs[1]:
-            st.markdown("### Convert Video")
-            st.markdown("<div class='muted'>For faster demo, keep video short (10–20 seconds).</div>",
-                        unsafe_allow_html=True)
-            max_size = st.selectbox("Quality / Speed", [480, 720], index=1)
-
-            if st.button("Convert Video → Toonify"):
-                if not st.session_state.paid:
-                    st.info("Please complete payment to convert/download the video.")
-                else:
-                    with st.spinner("Processing..."):
-                        suffix = os.path.splitext(uploaded_file.name)[1].lower()
-                        if suffix not in [".mp4", ".mov", ".avi", ".mkv"]:
-                            suffix = ".mp4"
-
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp_in:
-                            tmp_in.write(uploaded_file.read())
-                            in_path = tmp_in.name
-
-                        if not in_path.lower().endswith(".mp4"):
-                            mp4_path = in_path + ".mp4"
-                            os.rename(in_path, mp4_path)
-                            in_path = mp4_path
-
-                        out_path = video_to_toonify(in_path, style, max_size=max_size)
-
-                    st.session_state["last_video_out"] = out_path
-                    st.success("Done ✅ Go to Export tab")
-
-        with tabs[2]:
-            st.markdown("### Export Video")
-            out_path = st.session_state.get("last_video_out")
-            if out_path and os.path.exists(out_path):
-                with open(out_path, "rb") as f:
-                    st.download_button(
-                        "⬇ Download MP4",
-                        data=f,
-                        file_name=f"toonify_{style.lower()}.mp4",
-                        mime="video/mp4",
+                if CMP_OK:
+                    st.markdown("#### Before / After")
+                    image_comparison(
+                        img1=Image.fromarray(img_rgb),
+                        img2=Image.fromarray(out_rgb),
+                        label1="Before",
+                        label2="After",
                     )
+
+                buf = io.BytesIO()
+                Image.fromarray(out_rgb).save(buf, format="PNG")
+                download_button_bytes("⬇️ Download PNG", buf.getvalue(), "toonify.png", "image/png")
+                push_history({"type": "image", "style": style, "time": time.time(), "png": buf.getvalue()})
             else:
-                st.info("Convert first to enable export")
+                st.info("Upload an image to see output.")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    # =========================
+    # VIDEO MODE (Upload + URL + Camera)
+    # =========================
+    else:
+        in_path = None
+        snapshot_img_rgb = None
+        input_kind = None  # "video" or "snapshot"
+
+        with colA:
+            st.markdown("### 🎬 Video Input")
+            tab_upload, tab_url, tab_cam = st.tabs(["Upload File", "From URL", "Live Camera"])
+
+            with tab_upload:
+                upv = st.file_uploader("Upload video", type=["mp4", "mov", "avi", "mkv"], label_visibility="collapsed")
+                if upv:
+                    temp_in = safe_temp_path(os.path.splitext(upv.name)[1])
+                    with open(temp_in, "wb") as f:
+                        f.write(upv.read())
+                    in_path = temp_in
+                    input_kind = "video"
+                    st.video(in_path)
+
+            with tab_url:
+                url = st.text_input("Paste direct MP4 URL", placeholder="https://.../video.mp4")
+                if st.button("⬇️ Fetch Video"):
+                    if not url or (not url.startswith("http")):
+                        st.error("Please paste a valid URL.")
+                    else:
+                        try:
+                            with st.spinner("Downloading video..."):
+                                in_path = fetch_video_from_url(url)
+                            st.session_state["_url_video_path"] = in_path
+                            input_kind = "video"
+                            st.success("Downloaded ✅")
+                            st.video(in_path)
+                        except URLError as e:
+                            st.error(f"URL error: {e}")
+                        except Exception as e:
+                            st.error(f"Failed to fetch video: {e}")
+
+                cached = st.session_state.get("_url_video_path")
+                if (not in_path) and cached and os.path.exists(cached):
+                    st.caption("Using last downloaded URL video.")
+                    in_path = cached
+                    input_kind = "video"
+                    st.video(in_path)
+
+            with tab_cam:
+                st.caption("Streamlit camera gives snapshot. Real-time live video needs streamlit-webrtc.")
+                cam_img = st.camera_input("Open Camera")
+                if cam_img:
+                    snapshot_img_rgb = read_image_bytes(cam_img.getvalue())
+                    snapshot_img_rgb = resize_max_side(snapshot_img_rgb, 1024)
+                    input_kind = "snapshot"
+                    st.image(snapshot_img_rgb, caption="Camera Snapshot", use_container_width=True)
+
+        with colB:
+            st.markdown("### 🎞️ Output")
+
+            # Camera snapshot => image flow (no payment lock)
+            if input_kind == "snapshot" and snapshot_img_rgb is not None:
+                with st.spinner("Generating..."):
+                    out_bgr = process_image(snapshot_img_rgb, style, smooth=smooth, brighten=brighten)
+                    out_bgr = apply_post_filter(out_bgr, post_filter, intensity, edge_strength)
+
+                out_rgb = bgr_to_rgb(out_bgr)
+                st.image(out_rgb, caption=f"Result • {style}", use_container_width=True)
+
+                buf = io.BytesIO()
+                Image.fromarray(out_rgb).save(buf, format="PNG")
+                download_button_bytes("⬇️ Download PNG", buf.getvalue(), "camera_toonify.png", "image/png")
+                push_history({"type": "image", "style": style, "time": time.time(), "png": buf.getvalue()})
+
+            # Video upload/url
+            elif input_kind == "video" and in_path:
+                if not st.session_state.get("paid", False):
+                    st.warning("Video processing is demo-locked. Mark Paid ✅ from sidebar.")
+                else:
+                    if st.button("✨ Process Video"):
+                        with st.spinner("Processing video..."):
+                            out_path = process_video(
+                                in_path,
+                                style,
+                                smooth=smooth,
+                                brighten=brighten,
+                                post_filter=post_filter,
+                                intensity=intensity,
+                                edge_strength=edge_strength,
+                            )
+                        st.session_state["last_out_video_path"] = out_path
+                        st.success("Done ✅")
+                        st.video(out_path)
+                        download_button_bytes("⬇️ Download MP4", file_bytes_from_path(out_path), "toonify.mp4", "video/mp4")
+                        push_history({"type": "video", "style": style, "time": time.time(), "path": out_path})
+            else:
+                st.info("Choose Upload / URL / Camera to see output.")
+
+    # =========================
+    # History
+    # =========================
+    st.markdown("## 🕘 History (last 20)")
+    hist = st.session_state.get("history", [])
+    if not hist:
+        st.caption("No history yet.")
+        return
+
+    for idx, item in enumerate(hist):
+        if item["type"] == "image":
+            st.markdown('<div class="panel">', unsafe_allow_html=True)
+            st.write(f"**Image** • Style: `{item['style']}`")
+            st.image(Image.open(io.BytesIO(item["png"])), use_container_width=True)
+            download_button_bytes("⬇️ Download", item["png"], f"toonify_{idx}.png", "image/png")
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="panel">', unsafe_allow_html=True)
+            st.write(f"**Video** • Style: `{item['style']}`")
+            if os.path.exists(item["path"]):
+                st.video(item["path"])
+                download_button_bytes("⬇️ Download", file_bytes_from_path(item["path"]), f"toonify_{idx}.mp4", "video/mp4")
+            else:
+                st.caption("Video file expired (temp).")
+            st.markdown("</div>", unsafe_allow_html=True)
 
 
-# =========================
-# Footer
-# =========================
-st.markdown('<div class="hr"></div>', unsafe_allow_html=True)
-st.markdown(
-    "<div class='muted' style='text-align:center;'>© 2026 AI Toonify • Creator Studio</div>",
-    unsafe_allow_html=True,
-)
+# -----------------------------
+# Router
+# -----------------------------
+if not st.session_state.get("logged_in", False):
+    auth_page()
+else:
+    app_page()
