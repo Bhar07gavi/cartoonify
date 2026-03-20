@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login – Cartoonify</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="../css/style.css" rel="stylesheet" />
+    <script src="/js/theme.js"></script>
+</head>
+
+<body class="auth-page">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+
+    <div class="container d-flex min-vh-100 align-items-center justify-content-center py-5">
+        <div class="auth-card">
+            <!-- Logo -->
+            <div class="text-center mb-4">
+                <a href="/" class="brand-logo text-decoration-none">
+                    <img src="images/logo.png" class="brand-logo-img">
+                    <span class="brand-text">Cartoonify</span>
+                </a>
+                <p class="auth-tagline mt-2">Welcome back, creator!</p>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-pills auth-tabs mb-4" id="authTab">
+                <li class="nav-item flex-fill">
+                    <button class="nav-link auth-tab active w-100" id="login-tab" data-bs-toggle="pill"
+                        data-bs-target="#loginPane">Sign In</button>
+                </li>
+                <li class="nav-item flex-fill">
+                    <button class="nav-link auth-tab w-100" id="register-tab" data-bs-toggle="pill"
+                        data-bs-target="#registerPane">Register</button>
+                </li>
+            </ul>
+
+            <!-- Tab content -->
+            <div class="tab-content" id="authTabContent">
+                <!-- Login -->
+                <div class="tab-pane fade show active" id="loginPane">
+                    <!-- Google OAuth -->
+                    <a href="/auth/google" class="btn btn-google w-100 mb-3">
+                        <svg width="18" height="18" viewBox="0 0 18 18" class="me-2">
+                            <path fill="#4285F4"
+                                d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+                            <path fill="#34A853"
+                                d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+                            <path fill="#FBBC05"
+                                d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" />
+                            <path fill="#EA4335"
+                                d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" />
+                        </svg>
+                        Continue with Google
+                    </a>
+
+                    <div class="divider-text"><span>or continue with email</span></div>
+
+                    <form id="loginForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-envelope input-icon"></i>
+                                <input type="email" class="form-control form-control-dark" id="loginEmail"
+                                    placeholder="you@example.com" required />
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Password</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input type="password" class="form-control form-control-dark" id="loginPassword"
+                                    placeholder="••••••••" required />
+                                <button type="button" class="btn-toggle-pwd" onclick="togglePwd('loginPassword',this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="loginError" class="alert alert-danger py-2 d-none"></div>
+                        <button type="submit" class="btn btn-glow w-100" id="loginBtn">
+                            <span class="btn-text">Sign In</span>
+                            <span class="spinner-border spinner-border-sm d-none ms-2" id="loginSpinner"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Register -->
+                <div class="tab-pane fade" id="registerPane">
+                    <a href="/auth/google" class="btn btn-google w-100 mb-3">
+                        <svg width="18" height="18" viewBox="0 0 18 18" class="me-2">
+                            <path fill="#4285F4"
+                                d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />
+                            <path fill="#34A853"
+                                d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" />
+                            <path fill="#FBBC05"
+                                d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" />
+                            <path fill="#EA4335"
+                                d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" />
+                        </svg>
+                        Sign Up with Google
+                    </a>
+
+                    <div class="divider-text"><span>or register with email</span></div>
+
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-person input-icon"></i>
+                                <input type="text" class="form-control form-control-dark" id="regName"
+                                    placeholder="Your Name" required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-envelope input-icon"></i>
+                                <input type="email" class="form-control form-control-dark" id="regEmail"
+                                    placeholder="you@example.com" required />
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Password</label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input type="password" class="form-control form-control-dark" id="regPassword"
+                                    placeholder="••••••••" minlength="6" required />
+                                <button type="button" class="btn-toggle-pwd" onclick="togglePwd('regPassword',this)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="registerError" class="alert alert-danger py-2 d-none"></div>
+                        <div id="registerSuccess" class="alert alert-success py-2 d-none"></div>
+                        <button type="submit" class="btn btn-glow w-100" id="registerBtn">
+                            <span class="btn-text">Create Account</span>
+                            <span class="spinner-border spinner-border-sm d-none ms-2" id="registerSpinner"></span>
+                        </button>
+
+                    </form>
+                </div>
+            </div>
+            <div class="container pt-4">
+                <button id="backBtn" onclick="goBack()" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Handle ?token= from Google OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+
+        function togglePwd(id, btn) {
+            const input = document.getElementById(id);
+            const isText = input.type === 'text';
+            input.type = isText ? 'password' : 'text';
+            btn.innerHTML = `<i class="bi bi-eye${isText ? '' : '-slash'}"></i>`;
+        }
+
+        // Login form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const spinner = document.getElementById('loginSpinner');
+            const err = document.getElementById('loginError');
+            btn.disabled = true; spinner.classList.remove('d-none'); err.classList.add('d-none');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('cartoonify_token', data.token);
+                    localStorage.setItem('cartoonify_user', JSON.stringify(data.user));
+                    window.location.href = 'dashboard.html';
+                } else {
+                    err.textContent = data.message; err.classList.remove('d-none');
+                }
+            } catch {
+                err.textContent = 'Network error. Please try again.'; err.classList.remove('d-none');
+            } finally {
+                btn.disabled = false; spinner.classList.add('d-none');
+            }
+        });
+
+
+
+        function goBack() {
+
+            const token = localStorage.getItem("cartoonify_token")
+
+            if (token) {
+                window.location.replace("dashboard.html")
+            } else {
+                window.location.replace("/")   // index / home
+            }
+
+        }
+        const savedTheme = localStorage.getItem("cartoonify_theme")
+
+        if (savedTheme === "light") {
+            document.body.classList.add("light-theme")
+        }
+        // Register form
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('registerBtn');
+            const spinner = document.getElementById('registerSpinner');
+            const err = document.getElementById('registerError');
+            const suc = document.getElementById('registerSuccess');
+            btn.disabled = true; spinner.classList.remove('d-none');
+            err.classList.add('d-none'); suc.classList.add('d-none');
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: document.getElementById('regName').value,
+                        email: document.getElementById('regEmail').value,
+                        password: document.getElementById('regPassword').value
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('cartoonify_token', data.token);
+                    localStorage.setItem('cartoonify_user', JSON.stringify(data.user));
+                    suc.textContent = 'Account created! Redirecting...'; suc.classList.remove('d-none');
+                    setTimeout(() => window.location.href = 'dashboard.html', 1200);
+                } else {
+                    err.textContent = data.message; err.classList.remove('d-none');
+                }
+            } catch {
+                err.textContent = 'Network error. Please try again.'; err.classList.remove('d-none');
+            } finally {
+                btn.disabled = false; spinner.classList.add('d-none');
+            }
+        });
+    </script>
+</body>
+
+</html>

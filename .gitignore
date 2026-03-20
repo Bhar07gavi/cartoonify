@@ -1,0 +1,11 @@
+venv311/
+node_modules/
+__pycache__/
+*.pyc
+
+outputs/
+uploads/
+ai/*.mp4
+*.mp4
+
+.env
