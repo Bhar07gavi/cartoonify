@@ -583,7 +583,7 @@ onerror="this.src='https://via.placeholder.com/200x200/1a1a2e/7c3aed?text=Cartoo
 
             input.value = ""
 
-            const res = await fetch("/api/chat", {
+            const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message })
