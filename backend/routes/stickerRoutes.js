@@ -16,7 +16,7 @@ const { authenticateToken } = require("../auth")
 
 const router = express.Router()
 
-const AI_URL = "http://127.0.0.1:8000"
+const AI_URL = "https://cartoonify-ai.onrender.com"
 
 /* ─────────────────────────────────────────
    Multer Upload
