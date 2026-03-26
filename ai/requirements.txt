@@ -7,3 +7,4 @@ mediapipe
 moviepy
 rembg
 python-multipart
+onnxruntime
