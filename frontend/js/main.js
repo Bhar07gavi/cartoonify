@@ -232,7 +232,7 @@ async function generateSticker() {
 
     try {
 
-        const res = await fetch("/api/sticker", {
+        const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/sticker", {
             method: "POST",
             headers: {
                 Authorization: "Bearer " + token
