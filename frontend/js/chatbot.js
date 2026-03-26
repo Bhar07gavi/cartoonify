@@ -9,7 +9,7 @@ async function sendChat() {
 
     chatBox.innerHTML += `<p><b>You:</b> ${message}</p>`
 
-    const res = await fetch("/api/chat", {
+    const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/chat", {
 
         method: "POST",
 
