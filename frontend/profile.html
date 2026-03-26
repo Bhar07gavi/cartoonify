@@ -393,7 +393,7 @@
                     return
                 }
 
-                const userRes = await fetch("/api/auth/me", {
+                const userRes = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/me", {
                     headers: { "Authorization": "Bearer " + token }
                 })
 
@@ -415,7 +415,7 @@
                     document.getElementById("profileAvatar").src = avatar
                 }
 
-                const statsRes = await fetch("/api/auth/stats", {
+                const statsRes = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/stats", {
                     headers: { "Authorization": "Bearer " + token }
                 })
 
