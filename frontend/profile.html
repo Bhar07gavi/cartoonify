@@ -41,6 +41,9 @@
 
         <nav class="sidebar-nav">
 
+            <!-- MAIN -->
+            <p class="sidebar-heading">Main</p>
+
             <a href="dashboard.html" class="sidebar-link">
                 <i class="bi bi-grid-fill"></i> Dashboard
             </a>
@@ -65,10 +68,50 @@
                 <i class="bi bi-journal-text"></i> Blog
             </a>
 
-        </nav>
+            <hr class="sidebar-divider">
 
+            <!-- GUIDE -->
+            <p class="sidebar-heading">Guide</p>
+
+            <a href="howto.html" class="sidebar-link">
+                <i class="bi bi-question-circle"></i> How to Use
+            </a>
+
+            <a href="about.html" class="sidebar-link">
+                <i class="bi bi-info-circle"></i> About
+            </a>
+
+            <hr class="sidebar-divider">
+
+        </nav>
     </aside>
 
+    <!-- CHATBOT -->
+    <!-- CHAT BUTTON -->
+    <button id="chatToggleBtn" class="chat-toggle-btn" onclick="toggleChat()">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span id="chatHint">Hi, I'm Pixie 👋 Need help?</span>
+    </button>
+
+    <div id="chatbot" class="chatbot">
+
+        <div class="chat-header">
+            Cartoonify Assistant 🤖
+        </div>
+
+        <div id="chatMessages"></div>
+
+        <div class="chat-input-row">
+
+            <input id="chatInput" placeholder="Ask about styles, editing, stickers..." />
+
+            <button onclick="sendChat()">
+                <i class="bi bi-send"></i>
+            </button>
+
+        </div>
+
+    </div>
     <!-- MAIN -->
 
     <main class="app-main">
@@ -276,10 +319,68 @@
     <script>
 
         requireAuth()
+        function toggleChat() {
+
+            const bot = document.getElementById("chatbot")
+            const hint = document.getElementById("chatHint")
+
+            bot.classList.toggle("chat-open")
+
+            if (bot.classList.contains("chat-open")) {
+                hint.style.display = "none"
+            } else {
+                hint.style.display = "inline"
+            }
+        }
+        function initChatbot() {
+
+            const chat = document.getElementById("chatMessages")
+
+            if (!chat) return
+
+            chat.innerHTML = `
+    <p><b>Pixie 🤖:</b><br>
+    Hi! I'm <b>Pixie</b>.<br>
+    I can help you with:
+    <br>• Choosing cartoon styles
+    <br>• Image editing
+    <br>• Video cartoonification
+    <br>• Sticker generation
+    </p>
+    `
+        }
+
 
         function getToken() {
             return localStorage.getItem("cartoonify_token")
         }
+
+        function setActiveSidebar() {
+
+            const links = document.querySelectorAll(".sidebar-link");
+
+            // current page nikalna (e.g. dashboard.html)
+            let currentPage = window.location.pathname.split("/").pop();
+
+            // agar empty hai (like "/") to default dashboard
+            if (currentPage === "" || currentPage === "/") {
+                currentPage = "dashboard.html";
+            }
+
+            links.forEach(link => {
+
+                const linkPage = link.getAttribute("href");
+
+                // match karte hi active class add
+                if (linkPage === currentPage) {
+                    link.classList.add("active");
+                }
+
+            });
+        }
+
+        // page load hone ke baad run karo
+        document.addEventListener("DOMContentLoaded", setActiveSidebar);
 
         async function loadProfile() {
 
@@ -428,6 +529,37 @@
         }
 
         window.addEventListener("DOMContentLoaded", loadUserTopbar)
+        async function sendChat() {
+
+            const input = document.getElementById("chatInput")
+            const message = input.value.trim()
+
+            if (!message) return
+
+            const chat = document.getElementById("chatMessages")
+
+            chat.innerHTML += `<p><b>You:</b> ${message}</p>`
+
+            input.value = ""
+
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            })
+
+            const data = await res.json()
+
+            chat.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`
+
+            chat.scrollTop = chat.scrollHeight
+        } document.getElementById("chatInput").addEventListener("keypress", function (e) {
+            if (e.key === "Enter") sendChat()
+        })
+        window.addEventListener("DOMContentLoaded", () => {
+            loadUserTopbar()
+            initChatbot()
+        })
 
 
         document.getElementById("logoutBtn").addEventListener("click", function () {

@@ -28,17 +28,16 @@ const storage = multer.diskStorage({
 
         const dir = path.join(__dirname, "..", "..", "uploads")
 
-        if (!fs.existsSync(dir))
+        if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true })
+        }
 
         cb(null, dir)
-
     },
 
     filename: (req, file, cb) => {
 
         const ext = path.extname(file.originalname)
-
         cb(null, "upload_" + uuidv4() + ext)
 
     }
@@ -56,12 +55,14 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
 
     try {
 
-        if (!req.file)
+        if (!req.file) {
             return res.status(400).json({
                 success: false,
                 message: "No image uploaded"
             })
+        }
 
+        // ✅ Create form data for AI server
         const formData = new FormData()
 
         formData.append(
@@ -70,13 +71,24 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
             req.file.originalname
         )
 
-        if (req.body.text)
+        // ✅ Text
+        if (req.body.text) {
             formData.append("text", req.body.text)
+        }
 
-        if (req.body.position)
-            formData.append("position", req.body.position)
+        // ✅ Drag coordinates (IMPORTANT FIX)
+        if (req.body.x !== undefined) {
+            formData.append("x", req.body.x)
+        }
 
+        if (req.body.y !== undefined) {
+            formData.append("y", req.body.y)
+        }
 
+        // 🔍 Debug (optional)
+        console.log("Drag Position:", req.body.x, req.body.y)
+
+        // ✅ Call FastAPI AI service
         const aiRes = await axios.post(
             `${AI_URL}/generate-sticker`,
             formData,
@@ -86,22 +98,20 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
             }
         )
 
-
-        /* Save sticker file */
+        /* ───────── SAVE OUTPUT ───────── */
 
         const outputDir = path.join(__dirname, "..", "..", "outputs", "stickers")
 
-        if (!fs.existsSync(outputDir))
+        if (!fs.existsSync(outputDir)) {
             fs.mkdirSync(outputDir, { recursive: true })
+        }
 
         const filename = "sticker_" + uuidv4() + ".webp"
-
         const outputPath = path.join(outputDir, filename)
 
         fs.writeFileSync(outputPath, aiRes.data)
 
-
-        /* Save DB */
+        /* ───────── SAVE TO DB ───────── */
 
         const stickerPath = `outputs/stickers/${filename}`
 
@@ -110,23 +120,20 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
             VALUES (?, ?)
         `).run(req.user.id, stickerPath)
 
+        /* ───────── CLEANUP ───────── */
 
-        /* Remove upload */
-
-        if (fs.existsSync(req.file.path))
+        if (fs.existsSync(req.file.path)) {
             fs.unlinkSync(req.file.path)
+        }
 
-
-        /* Return URL */
+        /* ───────── RESPONSE ───────── */
 
         res.json({
             success: true,
             sticker: "/" + stickerPath
         })
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
         console.error("Sticker error:", err)
 

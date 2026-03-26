@@ -12,7 +12,6 @@
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <link href="css/style.css" rel="stylesheet">
@@ -22,12 +21,8 @@
 
 <body class="app-page sticker-fix">
 
-
     <!-- SIDEBAR -->
-
     <aside class="sidebar" id="sidebar">
-
-        <!-- LOGO -->
 
         <div class="sidebar-brand">
             <a href="/" class="brand-logo text-decoration-none">
@@ -36,9 +31,10 @@
             </a>
         </div>
 
-        <!-- NAVIGATION -->
-
         <nav class="sidebar-nav">
+
+            <!-- MAIN -->
+            <p class="sidebar-heading">Main</p>
 
             <a href="dashboard.html" class="sidebar-link">
                 <i class="bi bi-grid-fill"></i> Dashboard
@@ -64,193 +60,177 @@
                 <i class="bi bi-journal-text"></i> Blog
             </a>
 
+            <hr class="sidebar-divider">
+
+            <!-- GUIDE -->
+            <p class="sidebar-heading">Guide</p>
+
+            <a href="howto.html" class="sidebar-link">
+                <i class="bi bi-question-circle"></i> How to Use
+            </a>
+
+            <a href="about.html" class="sidebar-link">
+                <i class="bi bi-info-circle"></i> About
+            </a>
+
+            <hr class="sidebar-divider">
+
         </nav>
-
-
 
     </aside>
 
+    <!-- CHATBOT -->
+    <!-- CHAT BUTTON -->
+    <button id="chatToggleBtn" class="chat-toggle-btn" onclick="toggleChat()">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span id="chatHint">Hi, I'm Pixie 👋 Need help?</span>
+    </button>
 
-    <!-- MAIN -->
+    <div id="chatbot" class="chatbot">
 
+        <div class="chat-header">
+            Cartoonify Assistant 🤖
+        </div>
+
+        <div id="chatMessages"></div>
+
+        <div class="chat-input-row">
+
+            <input id="chatInput" placeholder="Ask about styles, editing, stickers..." />
+
+            <button onclick="sendChat()">
+                <i class="bi bi-send"></i>
+            </button>
+
+        </div>
+
+    </div>
+    <!-- TOPBAR -->
     <header class="app-topbar">
 
         <div class="topbar-left">
-
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="bi bi-list"></i>
             </button>
-
             <h1 class="page-title">Sticker Generator</h1>
-
         </div>
 
         <div class="topbar-right">
-
             <span class="badge-pill small-pill">
-                <i class="bi bi-circle-fill text-success me-1"></i>
-                AI Online
+                <i class="bi bi-circle-fill text-success me-1"></i> AI Online
             </span>
 
             <div class="dropdown">
-
                 <img id="topbarAvatar" src="https://ui-avatars.com/api/?name=User&background=7c3aed&color=fff"
-                    class="rounded-circle dropdown-toggle" width="36" data-bs-toggle="dropdown" aria-expanded="false"
-                    style="cursor:pointer">
+                    class="rounded-circle dropdown-toggle" width="36" data-bs-toggle="dropdown">
 
                 <ul class="dropdown-menu dropdown-menu-end profile-menu">
-
                     <li class="dropdown-header" id="userName">User</li>
-
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-
-                    <li>
-                        <a class="dropdown-item" href="/profile.html">
-                            <i class="bi bi-person"></i> Profile
-                        </a>
-                    </li>
-
-                    <li>
-                        <a class="dropdown-item" href="/settings.html">
-                            <i class="bi bi-gear"></i> Settings
-                        </a>
-                    </li>
-
+                    <li><a class="dropdown-item" href="/profile.html"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="/settings.html"><i class="bi bi-gear"></i> Settings</a></li>
                     <li>
                         <hr class="dropdown-divider">
                     </li>
-
-                    <li>
-                        <a class="dropdown-item text-danger" href="#" id="logoutBtn">
+                    <li><a class="dropdown-item text-danger" href="#" id="logoutBtn">
                             <i class="bi bi-box-arrow-right"></i> Logout
-                        </a>
-                    </li>
-
+                        </a></li>
                 </ul>
-
             </div>
         </div>
+
     </header>
 
-
+    <!-- MAIN CONTENT -->
     <div class="app-content">
 
         <div class="row g-4">
 
-
             <!-- LEFT PANEL -->
-
             <div class="col-lg-4">
 
                 <div class="section-card mb-4">
 
-                    <h5 class="mb-3">
-                        <i class="bi bi-cloud-upload me-2"></i>
-                        Upload Image
+                    <!-- CAMERA -->
+                    <video id="video" autoplay playsinline
+                        style="width:100%; height:220px; object-fit:cover; border-radius:10px;"></video>
+
+                    <canvas id="canvas" style="display:none;"></canvas>
+
+                    <div class="d-grid mt-3 gap-2">
+                        <button class="btn btn-glow" onclick="startCamera()">Start Camera</button>
+                        <button class="btn btn-ghost" onclick="captureSticker()">Capture Sticker</button>
+                    </div>
+
+                    <!-- UPLOAD -->
+                    <h5 class="mt-4">
+                        <i class="bi bi-cloud-upload me-2"></i> Upload Image
                     </h5>
 
                     <input type="file" id="imageInput" accept="image/*" class="form-control mb-3">
 
-                    <div id="previewWrapper" style="position:relative">
+                    <div id="previewWrapper" style="position:relative; min-height:200px;">
 
-                        <img id="previewImg" style="max-width:100%;border-radius:10px;display:none">
+                        <img id="previewImg" style="width:100%;border-radius:10px;display:none">
 
                         <div id="dragText" style="
-                                position:absolute;
-                                top:20px;
-                                left:50%;
-                                transform:translateX(-50%);
-                                color:white;
-                                font-weight:bold;
-                                font-size:28px;
-                                text-shadow:2px 2px 6px black;
-                                cursor:move;
-                                display:none;
-                            ">
-
+                            position:absolute;
+                            top:20px;
+                            left:20px;
+                            color:white;
+                            font-weight:bold;
+                            font-size:28px;
+                            text-shadow:2px 2px 6px black;
+                            cursor:move;
+                            display:none;">
                             Sticker Text
-
                         </div>
 
                     </div>
 
                 </div>
 
-
+                <!-- TEXT SETTINGS -->
                 <div class="section-card mb-4">
 
-                    <h5 class="mb-3">
-                        <i class="bi bi-chat-left-text me-2"></i>
-                        Sticker Text
-                    </h5>
+                    <h5><i class="bi bi-chat-left-text me-2"></i> Sticker Text</h5>
 
-                    <input type="text" id="stickerText" class="form-control mb-2" placeholder="Enter text for sticker">
+                    <input type="text" id="stickerText" class="form-control mb-2">
 
                     <select id="textPosition" class="form-select">
-
                         <option value="top">Top</option>
                         <option value="bottom">Bottom</option>
-
+                        <option value="custom">Custom (Drag)</option>
                     </select>
 
                 </div>
 
-
                 <button class="btn btn-glow w-100" onclick="generateSticker()">
-
-                    <i class="bi bi-magic me-2"></i>
                     Generate Sticker
-
                 </button>
 
             </div>
 
-
             <!-- RIGHT PANEL -->
-
             <div class="col-lg-8">
 
                 <div class="section-card text-center">
 
-                    <h5 class="mb-4">
-
-                        <i class="bi bi-emoji-smile me-2"></i>
-                        Sticker Result
-
-                    </h5>
+                    <h5><i class="bi bi-emoji-smile me-2"></i> Sticker Result</h5>
 
                     <div id="resultPlaceholder">
-
-                        <p class="text-muted">
-                            Your sticker will appear here
-                        </p>
-
+                        <p class="text-muted">Your sticker will appear here</p>
                     </div>
 
                     <div id="resultContainer" class="d-none">
-
                         <img id="result" style="max-width:300px">
 
                         <div class="mt-4">
-
-                            <button class="btn btn-glow me-2" onclick="downloadSticker()">
-
-                                <i class="bi bi-download me-1"></i>
-                                Download
-
-                            </button>
-
-                            <button class="btn btn-success" onclick="shareWhatsApp()">
-
-                                <i class="bi bi-whatsapp me-1"></i>
-                                WhatsApp
-
-                            </button>
-
+                            <button class="btn btn-glow" onclick="downloadSticker()">Download</button>
+                            <button class="btn btn-success" onclick="shareWhatsApp()">WhatsApp</button>
                         </div>
-
                     </div>
 
                 </div>
@@ -261,10 +241,8 @@
 
     </div>
 
-
+    <!-- CSS FIX -->
     <style>
-        /* ===== STICKER PAGE FIX (FINAL CORRECT) ===== */
-
         .sticker-fix .app-topbar {
             position: fixed;
             top: 0;
@@ -273,42 +251,12 @@
             z-index: 1000;
         }
 
-        /* ✅ THIS WAS MISSING */
         .sticker-fix .app-content {
             margin-top: var(--topbar-h);
             margin-left: var(--sidebar-w);
         }
 
-        /* Make row full height */
-        .sticker-fix .app-content .row {
-            display: flex;
-            align-items: stretch;
-        }
-
-        /* LEFT column */
-        .sticker-fix .col-lg-4 {
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* RIGHT column */
-        .sticker-fix .col-lg-8 {
-            display: flex;
-        }
-
-        /* RESULT CARD FULL HEIGHT */
-        .sticker-fix .col-lg-8 .section-card {
-            width: 100%;
-            min-height: 350px;
-            /* increase if needed */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        /* mobile fix */
         @media (max-width: 991.98px) {
-
             .sticker-fix .app-topbar {
                 left: 0;
                 width: 100%;
@@ -317,110 +265,206 @@
             .sticker-fix .app-content {
                 margin-left: 0;
             }
-
         }
     </style>
 
-
+    <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script src="/js/auth.js"></script>
     <script src="/js/main.js"></script>
     <script src="/js/sticker.js"></script>
 
-
     <script>
+
+        function toggleChat() {
+
+            const bot = document.getElementById("chatbot")
+            const hint = document.getElementById("chatHint")
+
+            bot.classList.toggle("chat-open")
+
+            if (bot.classList.contains("chat-open")) {
+                hint.style.display = "none"
+            } else {
+                hint.style.display = "inline"
+            }
+        }
+        function initChatbot() {
+
+            const chat = document.getElementById("chatMessages")
+
+            if (!chat) return
+
+            chat.innerHTML = `
+    <p><b>Pixie 🤖:</b><br>
+    Hi! I'm <b>Pixie</b>.<br>
+    I can help you with:
+    <br>• Choosing cartoon styles
+    <br>• Image editing
+    <br>• Video cartoonification
+    <br>• Sticker generation
+    </p>
+    `
+        }
+
         function toggleSidebar() {
             document.getElementById("sidebar").classList.toggle("open")
         }
 
         requireAuth()
 
-        /* -------------------------------
-           IMAGE PREVIEW
-        --------------------------------*/
+        /* TEXT SYNC */
+        document.getElementById("stickerText").addEventListener("input", function () {
+            document.getElementById("dragText").innerText = this.value || "Sticker Text"
+        })
 
-        document
-            .getElementById("imageInput")
-            .addEventListener("change", function () {
+        /* IMAGE PREVIEW */
+        document.getElementById("imageInput").addEventListener("change", function () {
 
-                const file = this.files[0]
+            const file = this.files[0]
+            if (!file) return
 
-                if (!file) return
+            const reader = new FileReader()
 
-                const reader = new FileReader()
+            reader.onload = function (e) {
 
-                reader.onload = function (e) {
+                const img = document.getElementById("previewImg")
 
-                    const img = document.getElementById("previewImg")
+                img.src = e.target.result
+                img.style.display = "block"
 
-                    img.src = e.target.result
-                    img.style.display = "block"
-
-                }
-
-                reader.readAsDataURL(file)
-
-            })
-
-
-        async function loadUserTopbar() {
-
-            try {
-                const res = await fetch("/api/auth/me", {
-                    headers: {
-                        "Authorization": "Bearer " + localStorage.getItem("cartoonify_token")
-                    }
-                })
-
-                const data = await res.json()
-
-                if (data.success && data.user) {
-
-                    const user = data.user
-
-                    const avatar =
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff`
-
-                    const avatarEl = document.getElementById("topbarAvatar")
-                    const nameEl = document.getElementById("userName")
-
-                    if (avatarEl) avatarEl.src = avatar
-                    if (nameEl) nameEl.textContent = user.name
-
-                    return
-                }
-
-            } catch (err) {
-                console.log("API failed")
+                document.getElementById("dragText").style.display = "block"
             }
 
-            // fallback (optional)
-            const stored = localStorage.getItem("cartoonify_user")
+            reader.readAsDataURL(file)
+        })
 
-            if (!stored) return
+        /* POSITION CONTROL */
+        let enableDrag = false
 
-            const user = JSON.parse(stored)
+        document.getElementById("textPosition").addEventListener("change", function () {
 
-            const avatar =
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=7c3aed&color=fff`
+            const dragText = document.getElementById("dragText")
 
-            document.getElementById("topbarAvatar").src = avatar
-            document.getElementById("userName").textContent = user.name
+            enableDrag = this.value === "custom"
+
+            if (this.value === "top") {
+                dragText.style.top = "20px"
+                dragText.style.left = "50%"
+                dragText.style.transform = "translateX(-50%)"
+            }
+
+            if (this.value === "bottom") {
+                dragText.style.top = "auto"
+                dragText.style.bottom = "20px"
+                dragText.style.left = "50%"
+                dragText.style.transform = "translateX(-50%)"
+            }
+
+            if (this.value === "custom") {
+                dragText.style.transform = "none"
+            }
+
+        })
+
+        /* DRAG LOGIC */
+        let isDragging = false
+        let offsetX = 0
+        let offsetY = 0
+
+        const textEl = document.getElementById("dragText")
+
+        textEl.addEventListener("mousedown", (e) => {
+
+            if (!enableDrag) return
+
+            isDragging = true
+
+            const rect = textEl.getBoundingClientRect()
+
+            offsetX = e.clientX - rect.left
+            offsetY = e.clientY - rect.top
+        })
+
+        document.addEventListener("mouseup", () => isDragging = false)
+
+        document.addEventListener("mousemove", (e) => {
+
+            if (!isDragging || !enableDrag) return
+
+            const wrapper = document.getElementById("previewWrapper")
+            const rect = wrapper.getBoundingClientRect()
+
+            const x = e.clientX - rect.left - offsetX
+            const y = e.clientY - rect.top - offsetY
+
+            textEl.style.left = x + "px"
+            textEl.style.top = y + "px"
+        })
+
+        async function sendChat() {
+
+            const input = document.getElementById("chatInput")
+            const message = input.value.trim()
+
+            if (!message) return
+
+            const chat = document.getElementById("chatMessages")
+
+            chat.innerHTML += `<p><b>You:</b> ${message}</p>`
+
+            input.value = ""
+
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            })
+
+            const data = await res.json()
+
+            chat.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`
+
+            chat.scrollTop = chat.scrollHeight
+        } document.getElementById("chatInput").addEventListener("keypress", function (e) {
+            if (e.key === "Enter") sendChat()
+        })
+        window.addEventListener("DOMContentLoaded", () => {
+            loadUserTopbar()
+            initChatbot()
+        })
+
+        function setActiveSidebar() {
+
+            const links = document.querySelectorAll(".sidebar-link");
+
+            // current page nikalna (e.g. dashboard.html)
+            let currentPage = window.location.pathname.split("/").pop();
+
+            // agar empty hai (like "/") to default dashboard
+            if (currentPage === "" || currentPage === "/") {
+                currentPage = "dashboard.html";
+            }
+
+            links.forEach(link => {
+
+                const linkPage = link.getAttribute("href");
+
+                // match karte hi active class add
+                if (linkPage === currentPage) {
+                    link.classList.add("active");
+                }
+
+            });
         }
 
-        window.addEventListener("DOMContentLoaded", loadUserTopbar)
-        /* -------------------------------
-           LOGOUT
-        --------------------------------*/
-
+        // page load hone ke baad run karo
+        document.addEventListener("DOMContentLoaded", setActiveSidebar);
+        /* LOGOUT */
         document.getElementById("logoutBtn").addEventListener("click", function () {
-
-            localStorage.removeItem("cartoonify_token")
-            localStorage.removeItem("cartoonify_user")
-
+            localStorage.clear()
             window.location.href = "/login.html"
-
         })
 
     </script>
