@@ -7,7 +7,7 @@ passport.use(
         {
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: "https://cartoonify-jade.vercel.app/api/auth/google/callback"
+            callbackURL: "https://cartoonify-backend-ordt.onrender.com/api/auth/google"
         },
         (accessToken, refreshToken, profile, done) => {
 
