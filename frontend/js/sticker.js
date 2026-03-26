@@ -67,7 +67,7 @@ async function captureSticker() {
     }
 
         try {
-            const res = await fetch("/api/sticker", {
+            const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/sticker", {
                 method: "POST",
                 headers: getAuthHeaders(),
                 body: formData
@@ -132,7 +132,7 @@ const y = (rectText.top - rectImg.top) * scaleY
 
     try {
 
-        const res = await fetch("/api/sticker", {
+        const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/sticker", {
             method: "POST",
             headers: getAuthHeaders(),
             body: formData
