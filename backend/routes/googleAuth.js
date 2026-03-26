@@ -25,7 +25,7 @@ router.get(
             const token = generateToken(user)
 
             // send token to frontend
-            res.redirect(`/dashboard.html?token=${token}`)
+            res.redirect(`https://cartoonify-jade.vercel.app/dashboard.html?token=${token}`)
 
         } catch (err) {
 
