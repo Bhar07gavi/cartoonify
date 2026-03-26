@@ -242,7 +242,7 @@
             if (!deleteUserId) return;
             const token = localStorage.getItem('cartoonify_token');
             try {
-                const res = await fetch(`/api/admin/users/${deleteUserId}`, {
+                const res = await fetch(`https://cartoonify-backend-ordt.onrender.com/api/admin/users/${deleteUserId}`, {
                     method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
