@@ -2932,3 +2932,150 @@ body.light-theme #themeToggle {
 #blogFull:hover {
   box-shadow: 0 10px 30px rgba(124, 58, 237, 0.2);
 }
+
+.camera-box {
+  width: 100%;
+  height: 320px;
+  /* FIX HEIGHT */
+  object-fit: cover;
+  /* NO STRETCH */
+  border-radius: 12px;
+  background: black;
+}
+
+
+/* ===============================
+   SIDEBAR MASCOT – FINAL FIX
+================================ */
+
+.sidebar-mascot {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 220px;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  overflow: hidden;
+
+  /* smooth blend into sidebar */
+  background: linear-gradient(to top,
+      rgba(124, 58, 237, 0.18),
+      transparent 70%);
+}
+
+/* IMAGE */
+.sidebar-mascot img {
+  width: 140px;
+  height: auto;
+
+  object-fit: contain;
+
+  /* SOFT BLEND (IMPORTANT) */
+  mask-image: linear-gradient(to top, black 70%, transparent);
+  -webkit-mask-image: linear-gradient(to top, black 70%, transparent);
+
+  /* premium shadow */
+  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.35));
+
+  animation: floatPixie 4s ease-in-out infinite;
+}
+
+/* FLOAT */
+@keyframes floatPixie {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* ===============================
+   DARK MODE FIX (IMPORTANT)
+================================ */
+
+/* FORCE cards dark */
+.section-card,
+.profile-card,
+.stat-card {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+/* FIX BOOTSTRAP INPUTS */
+.form-control,
+.form-select {
+  background: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+/* placeholder */
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+/* toggle switches */
+.form-check-input {
+  background-color: var(--bg-medium);
+  border: 1px solid var(--border-subtle);
+}
+
+/* labels */
+.form-label,
+.form-check-label {
+  color: var(--text-secondary) !important;
+}
+
+/* ======================================
+   FIX DARK INPUT IN LIGHT THEME
+====================================== */
+
+body.light-theme select,
+body.light-theme input,
+body.light-theme .form-control {
+
+  background: #ffffff !important;
+  color: #1e293b !important;
+
+  border: 1px solid #cfd9ff !important;
+
+  border-radius: 10px;
+}
+
+/* Dropdown arrow visibility */
+body.light-theme select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg fill='%234f46e5' viewBox='0 0 20 20'%3E%3Cpath d='M5 7l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+}
+
+.sidebar-divider {
+  opacity: 0.1;
+  margin: 12px 0;
+}
+
+.sidebar-heading {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #888;
+  margin: 10px 15px 5px;
+}
+
+.sidebar-link.active {
+  background: rgba(124, 58, 237, 0.15);
+  color: #7c3aed;
+  border-left: 4px solid #7c3aed;
+  font-weight: 500;
+}

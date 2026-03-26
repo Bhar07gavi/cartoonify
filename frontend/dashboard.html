@@ -39,6 +39,9 @@
 
         <nav class="sidebar-nav">
 
+            <!-- MAIN -->
+            <p class="sidebar-heading">Main</p>
+
             <a href="dashboard.html" class="sidebar-link">
                 <i class="bi bi-grid-fill"></i> Dashboard
             </a>
@@ -62,6 +65,22 @@
             <a href="blog.html" class="sidebar-link">
                 <i class="bi bi-journal-text"></i> Blog
             </a>
+
+            <hr class="sidebar-divider">
+
+            <!-- GUIDE -->
+            <p class="sidebar-heading">Guide</p>
+
+            <a href="howto.html" class="sidebar-link">
+                <i class="bi bi-question-circle"></i> How to Use
+            </a>
+
+            <a href="about.html" class="sidebar-link">
+                <i class="bi bi-info-circle"></i> About
+            </a>
+
+            <hr class="sidebar-divider">
+
 
         </nav>
 
@@ -384,6 +403,32 @@
             }
 
         }
+        function setActiveSidebar() {
+
+            const links = document.querySelectorAll(".sidebar-link");
+
+            // current page nikalna (e.g. dashboard.html)
+            let currentPage = window.location.pathname.split("/").pop();
+
+            // agar empty hai (like "/") to default dashboard
+            if (currentPage === "" || currentPage === "/") {
+                currentPage = "dashboard.html";
+            }
+
+            links.forEach(link => {
+
+                const linkPage = link.getAttribute("href");
+
+                // match karte hi active class add
+                if (linkPage === currentPage) {
+                    link.classList.add("active");
+                }
+
+            });
+        }
+
+        // page load hone ke baad run karo
+        document.addEventListener("DOMContentLoaded", setActiveSidebar);
 
         async function loadDashboard() {
 

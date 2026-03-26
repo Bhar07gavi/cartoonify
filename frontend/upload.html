@@ -36,6 +36,9 @@
 
         <nav class="sidebar-nav">
 
+            <!-- MAIN -->
+            <p class="sidebar-heading">Main</p>
+
             <a href="dashboard.html" class="sidebar-link">
                 <i class="bi bi-grid-fill"></i> Dashboard
             </a>
@@ -60,10 +63,51 @@
                 <i class="bi bi-journal-text"></i> Blog
             </a>
 
+            <hr class="sidebar-divider">
+
+            <!-- GUIDE -->
+            <p class="sidebar-heading">Guide</p>
+
+            <a href="howto.html" class="sidebar-link">
+                <i class="bi bi-question-circle"></i> How to Use
+            </a>
+
+            <a href="about.html" class="sidebar-link">
+                <i class="bi bi-info-circle"></i> About
+            </a>
+
+            <hr class="sidebar-divider">
         </nav>
 
 
     </aside>
+
+    <!-- CHATBOT -->
+    <!-- CHAT BUTTON -->
+    <button id="chatToggleBtn" class="chat-toggle-btn" onclick="toggleChat()">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span id="chatHint">Hi, I'm Pixie 👋 Need help?</span>
+    </button>
+
+    <div id="chatbot" class="chatbot">
+
+        <div class="chat-header">
+            Cartoonify Assistant 🤖
+        </div>
+
+        <div id="chatMessages"></div>
+
+        <div class="chat-input-row">
+
+            <input id="chatInput" placeholder="Ask about styles, editing, stickers..." />
+
+            <button onclick="sendChat()">
+                <i class="bi bi-send"></i>
+            </button>
+
+        </div>
+
+    </div>
     <!-- MAIN -->
     <main class="app-main">
         <header class="app-topbar">
@@ -127,30 +171,65 @@
             </div>
         </header>
         <div class="app-content">
-            <div class="row g-4"> <!-- LEFT PANEL -->
-                <div class="col-lg-5"> <!-- Upload -->
+            <div class="row g-4">
+
+                <!-- LEFT PANEL -->
+                <div class="col-lg-5">
+
+                    <!-- 🔥 CAMERA -->
                     <div class="section-card mb-4">
-                        <h5 class="section-card-title"> <i class="bi bi-cloud-upload me-2"></i> Upload Image </h5>
-                        <div class="upload-zone" id="uploadZone"> <input type="file" id="imageInput" accept="image/*"
-                                class="d-none">
+                        <h5 class="section-card-title">
+                            <i class="bi bi-camera-video me-2"></i> Live Camera
+                        </h5>
+
+                        <video id="video" autoplay playsinline class="camera-box"></video>
+                        <canvas id="canvas" style="display:none;"></canvas>
+
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-glow" onclick="startCamera()">🎥 Start Camera</button>
+                            <button class="btn btn-ghost" onclick="captureFrame()">📸 Capture</button>
+                        </div>
+                    </div>
+
+                    <!-- UPLOAD -->
+                    <div class="section-card mb-4">
+                        <h5 class="section-card-title">
+                            <i class="bi bi-cloud-upload me-2"></i> Upload Image
+                        </h5>
+
+                        <div class="upload-zone" id="uploadZone">
+                            <input type="file" id="imageInput" accept="image/*" class="d-none">
+
                             <div class="upload-zone-inner" id="uploadZoneInner">
-                                <div class="upload-icon"> <i class="bi bi-cloud-arrow-up"></i> </div>
+                                <div class="upload-icon">
+                                    <i class="bi bi-cloud-arrow-up"></i>
+                                </div>
                                 <p class="upload-text">Drag & drop your image here</p>
-                                <p class="upload-sub"> or <button class="btn-link-style"
-                                        onclick="document.getElementById('imageInput').click()"> browse files </button>
+                                <p class="upload-sub">
+                                    or
+                                    <button class="btn-link-style"
+                                        onclick="document.getElementById('imageInput').click()">browse files</button>
                                 </p>
                                 <p class="upload-hint">JPG, PNG, WEBP · Max 20MB</p>
                             </div>
-                            <div class="upload-preview d-none" id="uploadPreview"> <img id="previewImg"
-                                    class="preview-image"> <button class="btn-remove-img" onclick="clearUpload()"> <i
-                                        class="bi bi-x-circle-fill"></i> </button> </div>
-                        </div>
-                    </div> <!-- Styles -->
-                    <div class="section-card mb-4">
-                        <h5 class="section-card-title"> <i class="bi bi-palette me-2"></i> Choose Style </h5>
-                        <div class="style-grid">
-                            <div class="style-pill active" data-style="classic" onclick="selectStyle(this)">🎨 Classic
+
+                            <div class="upload-preview d-none" id="uploadPreview">
+                                <img id="previewImg" class="preview-image">
+                                <button class="btn-remove-img" onclick="clearUpload()">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </button>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- STYLE -->
+                    <div class="section-card mb-4">
+                        <h5 class="section-card-title">
+                            <i class="bi bi-palette me-2"></i> Choose Style
+                        </h5>
+
+                        <div class="style-grid">
+                            <div class="style-pill" data-style="classic" onclick="selectStyle(this)">🎨 Classic</div>
                             <div class="style-pill" data-style="anime" onclick="selectStyle(this)">⛩️ Anime</div>
                             <div class="style-pill" data-style="comic" onclick="selectStyle(this)">💥 Comic</div>
                             <div class="style-pill" data-style="sketch" onclick="selectStyle(this)">✏️ Sketch</div>
@@ -158,73 +237,153 @@
                             </div>
                             <div class="style-pill" data-style="minimal" onclick="selectStyle(this)">⬡ Minimal</div>
                         </div>
-                    </div> <!-- NEW FILTERS -->
+                    </div>
+
+                    <!-- FILTERS -->
                     <div class="section-card mb-4">
-                        <h5 class="section-card-title"> <i class="bi bi-sliders me-2"></i> Filters </h5> <select
-                            class="form-select" id="filterSelect">
+                        <h5 class="section-card-title">
+                            <i class="bi bi-sliders me-2"></i> Filters
+                        </h5>
+
+                        <select class="form-select" id="filterSelect">
                             <option value="">None</option>
                             <option value="vintage">Vintage</option>
                             <option value="bw">Black & White</option>
                             <option value="invert">Color Invert</option>
                             <option value="infrared">Infrared</option>
                         </select>
-                    </div> <!-- NEW IMAGE ENHANCEMENT -->
+                    </div>
+
+                    <!-- ENHANCEMENT -->
                     <div class="section-card mb-4">
-                        <h5 class="section-card-title"> <i class="bi bi-brightness-high me-2"></i> Image Enhancement
-                        </h5> <label>Brightness</label> <input type="range" id="brightness" class="form-range" min="0"
-                            max="100" value="50"> <label>Contrast</label> <input type="range" id="contrast"
-                            class="form-range" min="0" max="100" value="50"> <label>Saturation</label> <input
-                            type="range" id="saturation" class="form-range" min="0" max="100" value="50">
-                    </div> <!-- NEW OVERLAYS -->
+                        <h5 class="section-card-title">
+                            <i class="bi bi-brightness-high me-2"></i> Image Enhancement
+                        </h5>
+
+                        <label>Brightness</label>
+                        <input type="range" id="brightness" class="form-range" min="0" max="100" value="50">
+
+                        <label>Contrast</label>
+                        <input type="range" id="contrast" class="form-range" min="0" max="100" value="50">
+
+                        <label>Saturation</label>
+                        <input type="range" id="saturation" class="form-range" min="0" max="100" value="50">
+                    </div>
+
+                    <!-- OVERLAYS -->
                     <div class="section-card mb-4">
-                        <h5 class="section-card-title"> <i class="bi bi-cloud me-2"></i> Overlays </h5> <select
-                            class="form-select" id="overlaySelect">
+                        <h5 class="section-card-title">
+                            <i class="bi bi-cloud me-2"></i> Overlays
+                        </h5>
+
+                        <select class="form-select" id="overlaySelect">
                             <option value="">None</option>
                             <option value="snow">Snow</option>
                             <option value="rain">Rain</option>
                             <option value="fog">Fog</option>
                             <option value="dust">Dust Particles</option>
                         </select>
-                    </div> <button class="btn btn-glow w-100 btn-lg" id="generateBtn" onclick="generateCartoon()"
-                        disabled> <i class="bi bi-magic me-2"></i> <span id="generateBtnText">Cartoonify!</span> <span
-                            class="spinner-border spinner-border-sm d-none ms-2" id="generateSpinner"></span> </button>
+                    </div>
+
+                    <!-- BUTTON -->
+                    <button class="btn btn-glow w-100 btn-lg mb-3" id="generateBtn" onclick="generateCartoon()"
+                        disabled>
+                        <i class="bi bi-magic me-2"></i> Cartoonify!
+                        <span class="spinner-border spinner-border-sm d-none ms-2" id="generateSpinner"></span>
+                    </button>
+
+                    <!-- PROCESS -->
                     <div id="processingBox" class="processing-box d-none">
-                        <div class="processing-text"> Processing image with AI... </div>
+                        <div class="processing-text">Processing image with AI...</div>
                         <div class="progress mt-3">
                             <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated"
                                 style="width:0%"></div>
                         </div>
                     </div>
-                </div> <!-- RIGHT PANEL (UNCHANGED) -->
+
+                </div>
+
+                <!-- RIGHT PANEL -->
                 <div class="col-lg-7">
+
                     <div class="section-card h-100">
-                        <h5 class="section-card-title"> <i class="bi bi-image-alt me-2"></i> Result </h5>
-                        <div class="result-placeholder" id="resultPlaceholder"> <i class="bi bi-image fs-1"></i>
+
+                        <h5 class="section-card-title">
+                            <i class="bi bi-image-alt me-2"></i> Result
+                        </h5>
+
+                        <div class="result-placeholder" id="resultPlaceholder">
+                            <i class="bi bi-image fs-1"></i>
                             <p>Your cartoon will appear here after processing</p>
                         </div>
+
                         <div class="comparison-container d-none" id="comparisonContainer">
-                            <div class="comparison-slider-wrap" id="sliderWrap"> <img class="comp-img comp-before"
-                                    id="compBefore"> <img class="comp-img comp-after" id="compAfter">
+                            <div class="comparison-slider-wrap" id="sliderWrap">
+                                <img class="comp-img comp-before" id="compBefore">
+                                <img class="comp-img comp-after" id="compAfter">
                                 <div class="comp-slider" id="compSlider"></div>
                                 <div class="comp-label comp-label-left">CARTOON</div>
                                 <div class="comp-label comp-label-right">ORIGINAL</div>
                             </div>
                         </div>
-                        <div class="d-flex gap-2 mt-3 d-none" id="resultActions"> <a href="#"
-                                class="btn btn-glow flex-fill" id="downloadBtn"> <i class="bi bi-download me-2"></i>
-                                Download </a> <button class="btn btn-ghost" onclick="generateCartoon()">
-                                <i class="bi bi-arrow-clockwise me-2"></i> Retry </button> <a href="gallery.html"
-                                class="btn btn-ghost"> <i class="bi bi-collection me-2"></i> Gallery </a> </div>
+
+                        <div class="d-flex gap-2 mt-3 d-none" id="resultActions">
+                            <a href="#" class="btn btn-glow flex-fill" id="downloadBtn">
+                                <i class="bi bi-download me-2"></i> Download
+                            </a>
+
+                            <button class="btn btn-ghost" onclick="generateCartoon()">
+                                <i class="bi bi-arrow-clockwise me-2"></i> Retry
+                            </button>
+
+                            <a href="gallery.html" class="btn btn-ghost">
+                                <i class="bi bi-collection me-2"></i> Gallery
+                            </a>
+                        </div>
+
                     </div>
+
                 </div>
+
             </div>
-        </div>
     </main>
     <script src="/js/auth.js"></script>
     <script src="/js/main.js"></script>
     <script src="/js/editor.js"></script>
     <script>
         requireAuth()
+
+        function toggleChat() {
+
+            const bot = document.getElementById("chatbot")
+            const hint = document.getElementById("chatHint")
+
+            bot.classList.toggle("chat-open")
+
+            if (bot.classList.contains("chat-open")) {
+                hint.style.display = "none"
+            } else {
+                hint.style.display = "inline"
+            }
+        }
+        function initChatbot() {
+
+            const chat = document.getElementById("chatMessages")
+
+            if (!chat) return
+
+            chat.innerHTML = `
+    <p><b>Pixie 🤖:</b><br>
+    Hi! I'm <b>Pixie</b>.<br>
+    I can help you with:
+    <br>• Choosing cartoon styles
+    <br>• Image editing
+    <br>• Video cartoonification
+    <br>• Sticker generation
+    </p>
+    `
+        }
+
         let selectedStyle = "classic"
         let selectedFile = null
         function selectStyle(el) {
@@ -268,6 +427,32 @@
 
         })
 
+        function setActiveSidebar() {
+
+            const links = document.querySelectorAll(".sidebar-link");
+
+            // current page nikalna (e.g. dashboard.html)
+            let currentPage = window.location.pathname.split("/").pop();
+
+            // agar empty hai (like "/") to default dashboard
+            if (currentPage === "" || currentPage === "/") {
+                currentPage = "dashboard.html";
+            }
+
+            links.forEach(link => {
+
+                const linkPage = link.getAttribute("href");
+
+                // match karte hi active class add
+                if (linkPage === currentPage) {
+                    link.classList.add("active");
+                }
+
+            });
+        }
+
+        // page load hone ke baad run karo
+        document.addEventListener("DOMContentLoaded", setActiveSidebar);
         async function generateCartoon() {
 
             if (!selectedFile) {
@@ -352,6 +537,45 @@
             const progressInterval = startFakeProgress()
 
         }
+
+        let video = document.getElementById("video")
+        let canvas = document.getElementById("canvas")
+        let ctx = canvas.getContext("2d")
+
+        async function startCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+            video.srcObject = stream
+        }
+
+        function captureFrame() {
+
+            if (!video.srcObject) {
+                alert("Start camera first!")
+                return
+            }
+
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+
+            ctx.drawImage(video, 0, 0)
+
+            canvas.toBlob(blob => {
+
+                // 🔥 convert to file (IMPORTANT)
+                const file = new File([blob], "camera.jpg", {
+                    type: "image/jpeg"
+                })
+
+                selectedFile = file
+
+                // reuse your existing preview logic
+                handleFile(file)
+
+                // OPTIONAL: auto generate
+                // generateCartoon()
+
+            }, "image/jpeg")
+        } s
         function toggleSidebar() {
             document.getElementById("sidebar").classList.toggle("open")
         }
@@ -427,7 +651,6 @@
             }
 
         }
-
         async function loadUserTopbar() {
 
             try {
@@ -472,8 +695,41 @@
             document.getElementById("topbarAvatar").src = avatar
             document.getElementById("userName").textContent = user.name
         }
-
+        startCamera()
+        applyCartoonEffect()
         window.addEventListener("DOMContentLoaded", loadUserTopbar)
+
+        async function sendChat() {
+
+            const input = document.getElementById("chatInput")
+            const message = input.value.trim()
+
+            if (!message) return
+
+            const chat = document.getElementById("chatMessages")
+
+            chat.innerHTML += `<p><b>You:</b> ${message}</p>`
+
+            input.value = ""
+
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message })
+            })
+
+            const data = await res.json()
+
+            chat.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`
+
+            chat.scrollTop = chat.scrollHeight
+        } document.getElementById("chatInput").addEventListener("keypress", function (e) {
+            if (e.key === "Enter") sendChat()
+        })
+        window.addEventListener("DOMContentLoaded", () => {
+            loadUserTopbar()
+            initChatbot()
+        })
         document.getElementById("logoutBtn").addEventListener("click", function () {
 
             localStorage.removeItem("cartoonify_token")
