@@ -180,7 +180,7 @@
             btn.disabled = true; spinner.classList.remove('d-none'); err.classList.add('d-none');
 
             try {
-                const res = await fetch('/api/auth/login', {
+                const res = await fetch('https://cartoonify-backend-ordt.onrender.com/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -232,7 +232,7 @@
             err.classList.add('d-none'); suc.classList.add('d-none');
 
             try {
-                const res = await fetch('/api/auth/register', {
+                const res = await fetch('https://cartoonify-backend-ordt.onrender.com/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
