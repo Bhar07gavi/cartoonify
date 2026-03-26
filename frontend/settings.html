@@ -605,7 +605,7 @@
 
             const token = localStorage.getItem("cartoonify_token")
 
-            const res = await fetch("/api/auth/update", {
+            const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/update", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -715,7 +715,7 @@
 
             const token = localStorage.getItem("cartoonify_token")
 
-            const res = await fetch("/api/auth/delete", {
+            const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/delete", {
                 method: "DELETE",
                 headers: {
                     "Authorization": "Bearer " + token
@@ -741,7 +741,7 @@
         async function loadUserTopbar() {
 
             try {
-                const res = await fetch("/api/auth/me", {
+                const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/me", {
                     headers: {
                         "Authorization": "Bearer " + localStorage.getItem("cartoonify_token")
                     }
@@ -797,7 +797,7 @@
 
             input.value = ""
 
-            const res = await fetch("/api/chat", {
+            const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message })
