@@ -15,7 +15,7 @@ router.get(
 /* Google callback */
 router.get(
     "/google/callback",
-    passport.authenticate("google", { failureRedirect: "/login.html" }),
+    passport.authenticate("google", { failureRedirect: "https://cartoonify-jade.vercel.app/login.html" }),
     (req, res) => {
 
         try {
