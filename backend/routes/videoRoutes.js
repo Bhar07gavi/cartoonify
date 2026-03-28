@@ -181,30 +181,29 @@ VALUES (?, ?, ?, ?)
         }
 
         catch (err) {
+    console.error("=" * 50)
+    console.error("❌ VIDEO ERROR:", err.message)
+    console.error("❌ AI URL:", `${AI_URL}/cartoonify-video`)
+    
+    if (err.response) {
+        console.error("❌ AI Response Status:", err.response.status)
+        console.error("❌ AI Response:", err.response.data)
+    }
+    
+    if (err.code) {
+        console.error("❌ Error Code:", err.code)
+    }
+    console.error("=" * 50)
 
-            console.error("❌ Video cartoonify error:")
+    if (fs.existsSync(originalPath)) {
+        fs.unlinkSync(originalPath)
+    }
 
-            if (err.response) {
-                console.error("AI Server Response:", err.response.data.toString())
-            } else {
-                console.error(err.message)
-            }
-
-            /* Cleanup uploaded file */
-
-            if (fs.existsSync(originalPath)) {
-                fs.unlinkSync(originalPath)
-            }
-
-            res.status(500).json({
-
-                success: false,
-                message: "Video processing failed. Check AI server."
-
-            })
-
-        }
-
+    res.status(500).json({
+        success: false,
+        message: `Video processing failed: ${err.message}`
+    })
+}
     })
 
 /* ─────────────────────────────────────────
