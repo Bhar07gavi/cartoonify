@@ -26,34 +26,39 @@ STYLE_MODEL_MAP = {
     "shinkai": "shinkai"
 }
 
-print("\n---- Loading Cartoonify Models ----\n")
+print("\n---- Cartoonify Ready (Lazy Loading) ----\n")
 
+# ✅ Don't load models at startup - load on demand
 sessions = {}
 model_sizes = {}
 
-for name, path in MODEL_PATHS.items():
-
-    print("Checking model:", path)
-
-    if not os.path.exists(path):
-        print("Missing:", path)
-        continue
-
-    print("Loading:", name)
-
-    session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
-
+def load_model_if_needed(model_name):
+    """Load model only when first requested"""
+    
+    if model_name in sessions:
+        print(f"✅ Using cached model: {model_name}")
+        return sessions[model_name]
+    
+    path = MODEL_PATHS.get(model_name)
+    
+    if not path or not os.path.exists(path):
+        raise ValueError(f"Model not found: {model_name}")
+    
+    print(f"📥 Loading model: {model_name} from {path}")
+    
+    # Load model
+    session = ort.InferenceSession(
+        path, 
+        providers=["CPUExecutionProvider"]
+    )
+    
     input_shape = session.get_inputs()[0].shape
-
-    model_sizes[name] = 512 if 512 in input_shape else 256
-    sessions[name] = session
-
-    print("Loaded:", name)
-    print("Input shape:", input_shape)
-    print()
-
-print("Available models:", list(sessions.keys()))
-print("----------------------\n")
+    model_sizes[model_name] = 512 if 512 in input_shape else 256
+    sessions[model_name] = session
+    
+    print(f"✅ Loaded: {model_name}, Input shape: {input_shape}")
+    
+    return session
 
 
 def cartoonify_image(file_bytes, style="classic"):
@@ -108,9 +113,9 @@ def cartoonify_image(file_bytes, style="classic"):
 
     print("UI Style:", ui_style, "→ Model:", model_name)
 
-    if model_name not in sessions:
-        raise ValueError(f"Model not loaded: {model_name}")
-
+    # ✅ Load model only now (lazy loading)
+    session = load_model_if_needed(model_name)
+    
     h, w = img.shape[:2]
     original_size = (w, h)
 
@@ -122,8 +127,6 @@ def cartoonify_image(file_bytes, style="classic"):
     # normalize
     img = img.astype(np.float32) / 127.5 - 1.0
     input_img = np.expand_dims(img, axis=0)
-
-    session = sessions[model_name]
 
     input_name = session.get_inputs()[0].name
     output_name = session.get_outputs()[0].name
