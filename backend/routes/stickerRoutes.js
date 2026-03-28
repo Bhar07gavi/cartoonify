@@ -94,7 +94,8 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
             formData,
             {
                 headers: formData.getHeaders(),
-                responseType: "arraybuffer"
+                responseType: "arraybuffer",
+               timeout: 120000
             }
         )
 
