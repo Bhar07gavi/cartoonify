@@ -8,3 +8,4 @@ moviepy
 rembg
 python-multipart
 onnxruntime
+imageio-ffmpeg
