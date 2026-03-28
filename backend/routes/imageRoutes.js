@@ -106,17 +106,8 @@ router.post(
         const contrast = req.body.contrast || 50
         const saturation = req.body.saturation || 50
 
-        // Style → AI model mapping
-        const STYLE_MAP = {
-            classic: "hayao",
-            anime: "hayao",
-            comic: "paprika",
-            sketch: "sketch",
-            watercolor: "shinkai",
-            minimal: "shinkai"
-        }
-
-        const aiStyle = STYLE_MAP[style] || "hayao"
+        // Just pass the style directly - no mapping needed
+const aiStyle = style || "classic"
 
         console.log("STYLE FROM FRONTEND:", style)
 
