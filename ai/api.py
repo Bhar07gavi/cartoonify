@@ -1,6 +1,17 @@
 
 import os
 import sys
+
+# Add current directory to path FIRST
+AI_DIR = os.path.dirname(os.path.abspath(__file__))
+if AI_DIR not in sys.path:
+    sys.path.insert(0, AI_DIR)
+
+print("=" * 60)
+print("🔍 LOADING API.PY")
+print(f"📂 AI Directory: {AI_DIR}")
+print("=" * 60)
+
 import uuid
 import cv2
 import numpy as np
@@ -11,15 +22,40 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import uvicorn
 
-# ensure ai folder in path
-AI_DIR = os.path.dirname(os.path.abspath(__file__))
-if AI_DIR not in sys.path:
-    sys.path.insert(0, AI_DIR)
+print("✅ FastAPI imports successful")
 
-from cartoonify import cartoonify_image
-from video_cartoon import cartoonify_video
-from sticker_generator import generate_sticker
-from overlays import add_snow, add_fog, add_rain, add_dust
+# Try importing custom modules with error handling
+try:
+    from cartoonify import cartoonify_image
+    print("✅ cartoonify imported")
+except Exception as e:
+    print(f"❌ Failed to import cartoonify: {e}")
+    raise
+
+try:
+    from video_cartoon import cartoonify_video
+    print("✅ video_cartoon imported")
+except Exception as e:
+    print(f"❌ Failed to import video_cartoon: {e}")
+    raise
+
+try:
+    from sticker_generator import generate_sticker
+    print("✅ sticker_generator imported")
+except Exception as e:
+    print(f"❌ Failed to import sticker_generator: {e}")
+    raise
+
+try:
+    from overlays import add_snow, add_fog, add_rain, add_dust
+    print("✅ overlays imported")
+except Exception as e:
+    print(f"❌ Failed to import overlays: {e}")
+    raise
+
+print("=" * 60)
+print("✅ ALL IMPORTS SUCCESSFUL")
+print("=" * 60)
 
 app = FastAPI(title="Cartoonify AI Server")
 
@@ -242,9 +278,6 @@ async def sticker_api(
     )
 
 if __name__ == "__main__":
-    import os
-    import uvicorn
-    
     port = int(os.environ.get("PORT", 10000))
     
     print("=" * 60)
@@ -259,4 +292,3 @@ if __name__ == "__main__":
         workers=1,
         log_level="info"
     )
-
