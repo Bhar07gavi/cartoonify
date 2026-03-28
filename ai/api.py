@@ -88,27 +88,45 @@ async def cartoonify_image_api(
     contrast: int = Form(50),
     saturation: int = Form(50),
 ):
+    print("=" * 60)
+    print("🎨 CARTOONIFY REQUEST RECEIVED")
+    print(f"📁 Filename: {file.filename}")
+    print(f"📁 Content-Type: {file.content_type}")
+    print(f"🎭 Style: {style}")
+    print(f"🎨 Filter: {filter}")
+    print(f"☁️ Overlay: {overlay}")
+    print("=" * 60)
 
     try:
-
+        print("📥 Reading image bytes...")
         image_bytes = await file.read()
+        print(f"✅ Image size: {len(image_bytes)} bytes")
 
         # cartoonify using your existing model
+        print(f"🚀 Calling cartoonify_image(style='{style}')...")
         cartoon_bytes = cartoonify_image(image_bytes, style)
+        print(f"✅ Cartoonify successful! Output size: {len(cartoon_bytes)} bytes")
 
         # convert to OpenCV
+        print("🔄 Converting to OpenCV format...")
         npimg = np.frombuffer(cartoon_bytes, np.uint8)
         image = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+        
+        if image is None:
+            raise ValueError("Failed to decode cartoon image")
+        
+        print(f"✅ Image decoded: {image.shape}")
 
         # ---------------------------------
         # brightness / contrast
         # ---------------------------------
-
+        print("🎚️ Applying brightness/contrast...")
         image = cv2.convertScaleAbs(
             image,
             alpha=1 + (int(contrast) - 50) / 50,
             beta=int(brightness) - 50
         )
+        
         # saturation control
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         hsv[:,:,1] = cv2.convertScaleAbs(hsv[:,:,1], alpha=saturation/50)
@@ -117,7 +135,9 @@ async def cartoonify_image_api(
         # ---------------------------------
         # filters
         # ---------------------------------
-
+        if filter:
+            print(f"🎨 Applying filter: {filter}")
+        
         if filter == "bw":
             image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -125,96 +145,74 @@ async def cartoonify_image_api(
             image = cv2.bitwise_not(image)
 
         elif filter == "vintage":
-
             kernel = np.array([
                 [0.272,0.534,0.131],
                 [0.349,0.686,0.168],
                 [0.393,0.769,0.189]
             ])
-
             image = cv2.transform(image, kernel)
 
         elif filter == "infrared":
             b,g,r = cv2.split(image)
             image = cv2.merge((r,g,b))
 
-       # ---------------------------------
-# overlays (stronger effects)
-# ---------------------------------
-
+        # ---------------------------------
+        # overlays (stronger effects)
+        # ---------------------------------
+        
         if len(image.shape) == 2:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
         h, w = image.shape[:2]
+        
+        if overlay:
+            print(f"☁️ Applying overlay: {overlay}")
 
         if overlay == "rain":
-
             rain = image.copy()
-
             for _ in range(800):
-
                 x = np.random.randint(0, w)
                 y = np.random.randint(0, h)
-
-                cv2.line(
-                    rain,
-                    (x, y),
-                    (x + 3, y + 15),
-                    (180,180,180),
-                    1
-                )
-
+                cv2.line(rain, (x, y), (x + 3, y + 15), (180,180,180), 1)
             image = cv2.addWeighted(image, 0.7, rain, 0.3, 0)
 
-
         elif overlay == "snow":
-
             snow = image.copy()
-
             for _ in range(900):
-
                 x = np.random.randint(0, w)
                 y = np.random.randint(0, h)
-
                 size = np.random.randint(1,3)
-
                 cv2.circle(snow, (x,y), size, (255,255,255), -1)
-
             snow = cv2.GaussianBlur(snow,(3,3),0)
-
             image = cv2.addWeighted(image,0.8,snow,0.4,0)
 
-
         elif overlay == "fog":
-
             fog = np.full_like(image,255)
-
             fog = cv2.GaussianBlur(fog,(31,31),0)
-
             image = cv2.addWeighted(image,0.6,fog,0.4,0)
 
-
         elif overlay == "dust":
-
             dust = image.copy()
-
             for _ in range(400):
-
                 x = np.random.randint(0,w)
                 y = np.random.randint(0,h)
-
                 cv2.circle(dust,(x,y),1,(200,200,200),-1)
-
             dust = cv2.GaussianBlur(dust,(5,5),0)
-
             image = cv2.addWeighted(image,0.9,dust,0.25,0)
         
-
         # ---------------------------------
         # encode result
         # ---------------------------------
-
-        _, buffer = cv2.imencode(".jpg", image)
+        print("📦 Encoding final image...")
+        success, buffer = cv2.imencode(".jpg", image)
+        
+        if not success:
+            raise ValueError("Failed to encode final image")
+        
+        print(f"✅ Image encoded successfully! Size: {len(buffer.tobytes())} bytes")
+        print("=" * 60)
+        print("✅ REQUEST COMPLETED SUCCESSFULLY")
+        print("=" * 60)
 
         return Response(
             content=buffer.tobytes(),
@@ -222,6 +220,16 @@ async def cartoonify_image_api(
         )
 
     except Exception as e:
+        print("=" * 60)
+        print("❌ ERROR IN CARTOONIFY ENDPOINT")
+        print(f"❌ Error Type: {type(e).__name__}")
+        print(f"❌ Error Message: {str(e)}")
+        
+        import traceback
+        print("❌ Full Traceback:")
+        print(traceback.format_exc())
+        print("=" * 60)
+        
         raise HTTPException(500, str(e))
 
 # ------------------------------------------------
