@@ -4,7 +4,15 @@
  * sticker generator, preview, download, WhatsApp share
  */
 
-const API_BASE = "";
+const API_BASE = (() => {
+    if (window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:3000';
+    }
+    return 'https://cartoonify-backend-ordt.onrender.com';
+})();
+
+console.log('🔗 API Base URL:', API_BASE);
 
 
 /* ─────────────────────────────────────────
@@ -77,8 +85,11 @@ function getAuthHeaders() {
 async function apiGet(url) {
 
     const res = await fetch(API_BASE + url, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        credentials: 'include'  // ← ADD THIS LINE
     })
+
+    
 
     if (res.status === 401 || res.status === 403) {
 
@@ -102,6 +113,7 @@ async function apiPost(url, body) {
             ...getAuthHeaders(),
             "Content-Type": "application/json"
         },
+        credentials: 'include',
 
         body: JSON.stringify(body)
 
@@ -232,11 +244,12 @@ async function generateSticker() {
 
     try {
 
-        const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/sticker", {
+        const res = await fetch(`${API_BASE}/api/sticker`, {
             method: "POST",
             headers: {
                 Authorization: "Bearer " + token
             },
+            credentials: 'include',
             body: formData
         })
 
@@ -247,14 +260,21 @@ async function generateSticker() {
 
         const data = await res.json()
 
-        if (!data.success) {
-            showToast("Sticker failed", "error")
-            return
-        }
+if (!data.success) {
+    showToast(data.message || "Sticker failed", "error")  // ← CHANGED: Show actual error message
+    return
+}
 
-        const img = document.getElementById("result")
+const img = document.getElementById("result")
 
-        if (img) img.src = data.sticker
+if (img) {
+    // ← CHANGED: Handle both relative and absolute URLs
+    const stickerUrl = data.sticker.startsWith('http') 
+        ? data.sticker 
+        : `${API_BASE}${data.sticker}`;
+    
+    img.src = stickerUrl;
+}
 
         document.getElementById("resultPlaceholder")?.classList.add("d-none")
         document.getElementById("resultContainer")?.classList.remove("d-none")
