@@ -243,12 +243,14 @@ async def sticker_api(
 
 if __name__ == "__main__":
     import os
-    print("=" * 50)
-    print("🔥 SCRIPT IS RUNNING")
-    print("=" * 50)
+    import uvicorn
+    
     port = int(os.environ.get("PORT", 10000))
-    print(f"🚀 PORT FROM ENV: {port}")
-    print(f"🚀 Starting AI server on port {port}")
+    
+    print("=" * 60)
+    print(f"🚀 STARTING AI SERVER ON PORT: {port}")
+    print(f"🔍 PORT environment variable: {os.environ.get('PORT', 'NOT SET')}")
+    print("=" * 60)
     
     uvicorn.run(
         "api:app",
