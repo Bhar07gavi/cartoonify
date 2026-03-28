@@ -146,17 +146,14 @@ router.post(
             console.log("🎨 Sending image to AI server with style:", aiStyle)
 
             const aiResponse = await axios.post(
-
-                `${AI_URL}/cartoonify-image`,
-                formData,
-
-                {
-                    headers: formData.getHeaders(),
-                    responseType: "arraybuffer",
-                    timeout: 120000
-                }
-
-            )
+    `${AI_URL}/cartoonify-image`,
+    formData,
+    {
+        headers: formData.getHeaders(),
+        responseType: "arraybuffer",
+        timeout: 600000  // ← 10 minutes (600 seconds)
+    }
+)
 
             // ------------------------------------------------
             // Save cartoon image
