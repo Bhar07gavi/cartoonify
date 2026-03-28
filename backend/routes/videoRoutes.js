@@ -74,7 +74,7 @@ const upload = multer({
    AI SERVER
 ───────────────────────────────────────── */
 
-const AI_URL = process.env.AI_URL || "https://cartoonify-ai.onrender.com"
+const AI_URL = process.env.AI_SERVICE_URL || "http://localhost:8000"  // ✅ Correct name
 
 /* ─────────────────────────────────────────
    POST /api/videos/upload
