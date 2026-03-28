@@ -206,27 +206,33 @@ router.post(
 
         }
 
-        catch (err) {
+       catch (err) {
+    console.error("=" * 50)
+    console.error("❌ FULL ERROR:", err)
+    console.error("❌ Error Message:", err.message)
+    console.error("❌ Error Code:", err.code)
+    console.error("❌ AI URL Being Called:", `${AI_URL}/cartoonify-image`)
+    
+    if (err.response) {
+        console.error("❌ AI Response Status:", err.response.status)
+        console.error("❌ AI Response Data:", err.response.data)
+    }
+    
+    if (err.request && !err.response) {
+        console.error("❌ No response received from AI service")
+        console.error("❌ Request details:", err.request)
+    }
+    console.error("=" * 50)
 
-            console.error("❌ Cartoonify error:", err.message)
+    if (fs.existsSync(originalPath)) {
+        fs.unlinkSync(originalPath)
+    }
 
-            if (err.response) {
-                console.error("AI Server Response:", err.response.data.toString())
-            }
-
-            if (fs.existsSync(originalPath)) {
-                fs.unlinkSync(originalPath)
-            }
-
-            res.status(500).json({
-
-                success: false,
-                message: "Failed to process image. Ensure AI server is running."
-
-            })
-
-        }
-
+    res.status(500).json({
+        success: false,
+        message: `Failed to process image: ${err.message}`
+    })
+}
     }
 )
 
