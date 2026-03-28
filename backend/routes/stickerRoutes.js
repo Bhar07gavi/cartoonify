@@ -134,15 +134,21 @@ router.post("/", authenticateToken, upload.single("image"), async (req, res) => 
         })
 
     } catch (err) {
-
-        console.error("Sticker error:", err)
-
-        res.status(500).json({
-            success: false,
-            message: "Sticker generation failed"
-        })
-
+    console.error("=" * 50)
+    console.error("❌ STICKER ERROR:", err.message)
+    console.error("❌ AI URL:", `${AI_URL}/generate-sticker`)
+    
+    if (err.response) {
+        console.error("❌ AI Response Status:", err.response.status)
+        console.error("❌ AI Response:", err.response.data)
     }
+    console.error("=" * 50)
+    
+    res.status(500).json({
+        success: false,
+        message: `Sticker generation failed: ${err.message}`
+    })
+}
 
 })
 
