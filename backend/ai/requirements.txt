@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+opencv-python
+numpy
+pillow
+mediapipe
+moviepy
+rembg
+python-multipart
