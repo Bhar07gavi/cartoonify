@@ -393,7 +393,7 @@
                     return
                 }
 
-                const userRes = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/me", {
+                const userRes = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/auth/me", {
                     headers: { "Authorization": "Bearer " + token }
                 })
 
@@ -415,7 +415,7 @@
                     document.getElementById("profileAvatar").src = avatar
                 }
 
-                const statsRes = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/stats", {
+                const statsRes = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/auth/stats", {
                     headers: { "Authorization": "Bearer " + token }
                 })
 
@@ -486,7 +486,7 @@
         async function loadUserTopbar() {
 
             try {
-                const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/me", {
+                const res = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/auth/me", {
                     headers: {
                         "Authorization": "Bearer " + localStorage.getItem("cartoonify_token")
                     }
@@ -542,7 +542,7 @@
 
             input.value = ""
 
-            const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/chat", {
+            const res = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message })
