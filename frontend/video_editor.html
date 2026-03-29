@@ -445,7 +445,7 @@
                 }, 300)
 
 
-                const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/videos/upload", {
+                const res = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/videos/upload", {
 
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` },
@@ -548,7 +548,7 @@
 
             const interval = setInterval(async () => {
 
-                const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/progress/" + jobId)
+                const res = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/progress/" + jobId)
                 const data = await res.json()
 
                 bar.style.width = data.progress + "%"
@@ -572,7 +572,7 @@
 
             try {
 
-                const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/videos/result/" + jobId)
+                const res = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/videos/result/" + jobId)
                 const data = await res.json()
 
                 spinner.classList.add("d-none")
@@ -622,7 +622,7 @@
         async function loadUserTopbar() {
 
             try {
-                const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/auth/me", {
+                const res = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/auth/me", {
                     headers: {
                         "Authorization": "Bearer " + localStorage.getItem("cartoonify_token")
                     }
@@ -680,7 +680,7 @@
 
             input.value = ""
 
-            const res = await fetch("https://cartoonify-backend-ordt.onrender.com/api/chat", {
+            const res = await fetch("https://cartoonify-backend-h7h9.onrender.com/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message })
