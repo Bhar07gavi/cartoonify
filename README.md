@@ -1,6 +1,5 @@
-<<<<<<< HEAD
-# AI-Based-Image-Transformation-Tool-for-Cartoon-Effect-Generation_Feb_Batch-8_2026
-=======
+
+
 # 🎨 Cartoonify – AI-Powered Cartoon Creator
 
 A full-stack AI SaaS platform for transforming photos and videos into stunning cartoon styles using OpenCV, FastAPI, and Node.js.
